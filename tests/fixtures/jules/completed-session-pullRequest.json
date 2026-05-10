@@ -1,0 +1,37 @@
+{
+  "name": "sessions/fixture-pr-1",
+  "id": "fixture-pr-1",
+  "title": "Add codebase review report",
+  "state": "COMPLETED",
+  "createTime": "2026-05-10T11:00:00Z",
+  "updateTime": "2026-05-10T11:30:00Z",
+  "url": "https://jules.google.com/session/fixture-pr-1",
+  "sourceContext": {
+    "source": "sources/github/darksheer/synapse",
+    "githubRepoContext": {
+      "startingBranch": "master"
+    }
+  },
+  "prompt": "Create an architectural review report.",
+  "outputs": [
+    {
+      "changeSet": {
+        "source": "sources/github/darksheer/synapse",
+        "gitPatch": {
+          "unidiffPatch": "diff --git a/POWERUP_REFACTOR_REVIEW.md b/POWERUP_REFACTOR_REVIEW.md\n--- /dev/null\n+++ b/POWERUP_REFACTOR_REVIEW.md\n@@ -0,0 +1 @@\n+# Review\n",
+          "baseCommitId": "2222222222222222222222222222222222222222",
+          "suggestedCommitMessage": "docs: add architectural review report"
+        }
+      }
+    },
+    {
+      "pullRequest": {
+        "url": "https://github.com/darksheer/synapse/pull/1",
+        "title": "docs: add architectural review report",
+        "description": "Adds a review report.",
+        "baseRef": "master",
+        "headRef": "review-report-fixture-pr-1"
+      }
+    }
+  ]
+}

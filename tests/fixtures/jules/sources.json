@@ -1,0 +1,25 @@
+{
+  "sources": [
+    {
+      "name": "sources/github/darksheer/Acheron",
+      "githubRepo": {
+        "owner": "darksheer",
+        "repo": "Acheron"
+      }
+    },
+    {
+      "name": "sources/github/darksheer/ARC",
+      "githubRepo": {
+        "owner": "darksheer",
+        "repo": "ARC"
+      }
+    },
+    {
+      "name": "sources/github/darksheer/synapse",
+      "githubRepo": {
+        "owner": "darksheer",
+        "repo": "synapse"
+      }
+    }
+  ]
+}

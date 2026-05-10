@@ -1,0 +1,28 @@
+{
+  "name": "sessions/fixture-change-1",
+  "id": "fixture-change-1",
+  "title": "Fix unsafe yaml.load usage",
+  "state": "COMPLETED",
+  "createTime": "2026-05-10T10:00:00Z",
+  "updateTime": "2026-05-10T10:10:00Z",
+  "url": "https://jules.google.com/session/fixture-change-1",
+  "sourceContext": {
+    "source": "sources/github/darksheer/Acheron",
+    "githubRepoContext": {
+      "startingBranch": "main"
+    }
+  },
+  "prompt": "Fix unsafe yaml.load usage in src/config.py and add a regression test.",
+  "outputs": [
+    {
+      "changeSet": {
+        "source": "sources/github/darksheer/Acheron",
+        "gitPatch": {
+          "unidiffPatch": "diff --git a/src/config.py b/src/config.py\n--- a/src/config.py\n+++ b/src/config.py\n@@ -1 +1 @@\n-yaml.load(raw)\n+yaml.safe_load(raw)\ndiff --git a/tests/test_config.py b/tests/test_config.py\n--- a/tests/test_config.py\n+++ b/tests/test_config.py\n@@ -0,0 +1 @@\n+def test_uses_safe_load(): pass\n",
+          "baseCommitId": "1111111111111111111111111111111111111111",
+          "suggestedCommitMessage": "security: use safe yaml loader"
+        }
+      }
+    }
+  ]
+}

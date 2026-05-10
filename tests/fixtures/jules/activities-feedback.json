@@ -1,0 +1,22 @@
+{
+  "activities": [
+    {
+      "id": "activity-simple-1",
+      "name": "sessions/fixture-feedback-simple/activities/activity-simple-1",
+      "createTime": "2026-05-10T12:40:00Z",
+      "originator": "agent",
+      "agentMessaged": {
+        "agentMessage": "Can you confirm if you are satisfied with these optimizations? Should I finalize?"
+      }
+    },
+    {
+      "id": "activity-substantive-1",
+      "name": "sessions/fixture-feedback-substantive/activities/activity-substantive-1",
+      "createTime": "2026-05-10T13:10:00Z",
+      "originator": "agent",
+      "agentMessaged": {
+        "agentMessage": "The prompt mentions _proposal_filename, but the code has packet_filename(proposal, *, index). Should I update that function, and what filename format should I derive from Proposal?"
+      }
+    }
+  ]
+}
