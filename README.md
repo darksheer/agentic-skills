@@ -6,7 +6,7 @@ A collection of cross-platform AI agent skills by [darksheer](https://github.com
 
 | Skill | Description | Status |
 |-------|-------------|--------|
-| [pr-orchestrator](./pr-orchestrator/) | End-to-end GitHub PR review orchestration — auto-detects review tools (CodeRabbit, Codex, Jules, Gemini Code Assist), triages findings, applies fixes, re-verifies, and learns from outcomes. | In development |
+| [pr-orchestrator](./pr-orchestrator/) | End-to-end GitHub PR review orchestration for detection, invocation, triage, remediation, re-verification, and reporting across multiple review tools. See [skill README](./pr-orchestrator/README.md) for full behavior details. | In development |
 
 ## What Are Skills?
 
@@ -18,6 +18,7 @@ Skills are portable instruction sets that give AI coding agents specialized capa
 agentic-skills/
 ├── README.md
 ├── pr-orchestrator/        # GitHub PR review orchestration
+│   ├── README.md
 │   ├── SKILL.md
 │   ├── TODO.md
 │   └── references/
