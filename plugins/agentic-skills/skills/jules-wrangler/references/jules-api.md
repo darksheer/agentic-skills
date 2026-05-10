@@ -1,6 +1,6 @@
 # Jules API Reference
 
-Complete reference for the Jules REST API as used by the jules-triage skill.
+Complete reference for the Jules REST API as used by the jules-wrangler skill.
 
 ## Base URL
 
@@ -307,7 +307,7 @@ Common errors:
 
 ## Polling Strategy for Triage
 
-For the jules-triage skill, the recommended polling approach:
+For the jules-wrangler skill, the recommended polling approach:
 
 1. **List all sessions** with `pageSize=100`
 2. **Filter locally** by state (`COMPLETED`, `AWAITING_PLAN_APPROVAL`)

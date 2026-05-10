@@ -1,4 +1,4 @@
-# Jules Triage — TODO
+# Jules Wrangler — TODO
 
 ## Phase 1: Validation & Testing
 
@@ -12,8 +12,8 @@
 
 - [ ] **Wire up Slack notifications** — Test digest posting to a Slack channel via the Slack MCP.
 - [ ] **GitHub issue tracking** — Test posting digests as GitHub issues on a tracking repo.
-- [ ] **State persistence** — Verify `.jules-triage-state.json` correctly tracks sessions across runs.
-- [x] **Handoff payload fixture** — Add a fixture test for the structured jules-triage to github-babysitter handoff payload documented in `references/promotion-workflow.md`.
+- [ ] **State persistence** — Verify `.jules-wrangler-state.json` correctly tracks sessions across runs.
+- [x] **Handoff payload fixture** — Add a fixture test for the structured jules-wrangler to github-babysitter handoff payload documented in `references/promotion-workflow.md`.
 - [ ] **Live write-path validation** — Only test `sendMessage`, plan approval, PR creation, PR comments, or handoff invocation after explicit approval and only against a disposable repo/PR.
 
 ## Phase 3: Learning System

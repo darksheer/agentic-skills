@@ -1,5 +1,12 @@
 # PR Orchestrator
 
+## Legacy Status
+
+`pr-orchestrator` is a legacy compatibility skill. New public installs should
+use `github-babysitter` in `pr-care` mode from
+`plugins/agentic-skills/skills/github-babysitter/`. This folder is not shipped
+as a Claude Code marketplace skill.
+
 PR Orchestrator is a portable AI-agent skill for managing the full lifecycle of a GitHub pull request review. It detects available review tools, invokes them where appropriate, collects every finding, triages the results, applies or recommends fixes according to an autonomy policy, re-runs verification, posts a final report, and records outcome data so future reviews get faster and more accurate.
 
 This is a skill, not a standalone binary. The core operating instructions live in [SKILL.md](./SKILL.md), and detailed references live in [references/](./references/). Point an agent at the skill and give it a PR target; the agent follows the workflow using the tools available in its environment.

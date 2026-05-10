@@ -1,21 +1,17 @@
 ---
 name: pr-orchestrator
 description: >
-  End-to-end GitHub PR review orchestration agent. Monitors PRs, auto-detects available
-  code review tools (CodeRabbit, Codex, Jules, Gemini Code Assist, and others), invokes
-  them, aggregates and triages every finding, deterministically evaluates whether each
-  finding should be applied, annotates decisions inline, applies fixes autonomously (or
-  with approval, per config), re-triggers reviews and tests after changes, enforces
-  compliance (laws, claude.md, agents.md), learns from outcomes, and optimizes its own
-  workflow for cost and speed. Works in Claude Code, Cursor, Codex CLI, and Gemini —
-  GUI or CLI. Use this skill whenever the user mentions PR review, code review orchestration,
-  PR monitoring, review automation, GitHub review workflow, pull request management,
-  multi-reviewer coordination, or wants to automate any part of the PR review lifecycle.
-  Also trigger when the user asks about CodeRabbit, Codex reviews, Jules, or Gemini
-  Code Assist in the context of PRs.
+  Legacy compatibility wrapper for focused PR review orchestration. Prefer the
+  merged github-babysitter skill, mode pr-care, for new work. This legacy skill
+  covers PR review, CI, reviewer comments, remediation, and merge readiness when
+  an old prompt or config explicitly names pr-orchestrator.
 ---
 
 # PR Orchestrator
+
+Compatibility note: for new work, use `github-babysitter` with `pr-care`
+(`pr-babysitter`) mode. Keep this skill available only for old prompts,
+existing `.pr-orchestrator.yml` configs, or migration checks.
 
 A unified orchestration agent for GitHub Pull Request review, remediation, and continuous improvement.
 
@@ -98,6 +94,20 @@ Before invoking anything, inventory what's available. Read `references/review-to
 | Reviewdog | `.reviewdog.yml` | Linter orchestration via Action |
 
 For tools that auto-review on PR open (CodeRabbit, Gemini), don't re-invoke — just wait for and collect their output. For tools that need explicit triggering, invoke them.
+
+### Bot and Dependency PRs
+
+Before triggering any reviewer or posting comments, identify whether the PR author
+is a bot (`dependabot[bot]`, `renovate[bot]`, GitHub Actions, or another App).
+If an installed reviewer explicitly skipped the PR because it was bot-authored
+(for example CodeRabbit's "Bot user detected" status), record that as a tool
+status instead of treating it as a missing review. Do not override that skip with
+an on-demand review command unless the user explicitly asked for it or the config
+sets `bot_prs.trigger_reviewers: true`.
+
+For dependency update PRs, prioritize package/lockfile consistency, security
+advisories, CI status, and release-note risk. If there are no inline findings and
+CI is failing, root-cause the failing checks before requesting more AI review.
 
 ### GitHub Interaction Layer
 

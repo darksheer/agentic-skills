@@ -1,0 +1,10 @@
+{
+  "name": "agentic-skills",
+  "version": "0.1.0",
+  "description": "Jules Wrangler and GitHub Babysitter skills for agentic coding workflows.",
+  "author": {
+    "name": "darksheer"
+  },
+  "repository": "https://github.com/darksheer/agentic-skills",
+  "license": "Apache-2.0"
+}

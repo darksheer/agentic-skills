@@ -7,7 +7,7 @@ Templates for the daily triage digest in different formats.
 ## Detailed Format
 
 ```markdown
-# Jules Triage Digest — {date}
+# Jules Wrangler Digest — {date}
 
 **Run time**: {start_time} – {end_time} ({duration})
 **Mode**: {autonomy_mode}
@@ -83,7 +83,7 @@ These sessions were not promoted:
 ## Summary Format
 
 ```markdown
-# Jules Triage — {date}
+# Jules Wrangler — {date}
 
 **{promoted} promoted** | {pending} awaiting approval | {rejected} rejected | {active} still running
 
@@ -99,7 +99,7 @@ Top promotions:
 ## Minimal Format
 
 ```markdown
-Jules Triage {date}: {promoted}↑ {pending}⏸ {rejected}✗ ({total} scanned)
+Jules Wrangler {date}: {promoted}↑ {pending}⏸ {rejected}✗ ({total} scanned)
 ```
 
 ---
@@ -113,7 +113,7 @@ When posting to Slack, use blocks:
   "blocks": [
     {
       "type": "header",
-      "text": { "type": "plain_text", "text": "Jules Triage Digest — {date}" }
+      "text": { "type": "plain_text", "text": "Jules Wrangler Digest — {date}" }
     },
     {
       "type": "section",
@@ -148,8 +148,8 @@ When posting to Slack, use blocks:
 
 When posting as a GitHub issue:
 
-**Title**: `Jules Triage Digest — {date}`
-**Labels**: `jules-triage`, `digest`
+**Title**: `Jules Wrangler Digest — {date}`
+**Labels**: `jules-wrangler`, `digest`
 **Body**: Use the Detailed Format above
 
 Close the issue automatically after 7 days or when all pending items are resolved.

@@ -1,49 +1,122 @@
 # agentic-skills
 
-A collection of cross-platform AI agent skills by [darksheer](https://github.com/darksheer). Each skill works across Claude Code, Cursor, Codex CLI, and Gemini — in GUI or CLI.
+Claude Code plugin and Codex-installable skills for agentic coding workflows.
 
-## Skills
+The Claude Code plugin tree is the source of truth. Codex installs the same
+skill directories directly from GitHub paths.
 
-| Skill | Description | Status |
-|-------|-------------|--------|
-| [pr-orchestrator](./pr-orchestrator/) | End-to-end GitHub PR review orchestration for detection, invocation, triage, remediation, re-verification, and reporting across multiple review tools. See [skill README](./pr-orchestrator/README.md) for full behavior details. | In development |
+## Public Skills
 
-## What Are Skills?
+| Skill | Purpose |
+| --- | --- |
+| `jules-wrangler` | Triage Google Jules sessions, promote approved work to GitHub PRs, and hand PRs to GitHub Babysitter. |
+| `github-babysitter` | Run repo-wide health rounds and focused PR care for reviews, CI, and merge readiness. |
 
-Skills are portable instruction sets that give AI coding agents specialized capabilities. A skill is a directory containing a `SKILL.md` file (the core instructions) and optional reference files, scripts, and assets. Skills can be installed in Claude Code, shared as `.skill` files, or loaded directly by any agent that reads markdown.
+Legacy names are migration aliases only:
 
-## Repo Structure
+- `jules-triage` is replaced by `jules-wrangler`.
+- `pr-orchestrator` and `github_pro_babysitter` are replaced by `github-babysitter`.
 
-```
+## Repository Layout
+
+```text
 agentic-skills/
-├── README.md
-├── pr-orchestrator/        # GitHub PR review orchestration
-│   ├── README.md
-│   ├── SKILL.md
-│   ├── TODO.md
-│   └── references/
-├── <future-skill>/
-│   ├── SKILL.md
-│   └── ...
+├── .claude-plugin/
+│   └── marketplace.json
+├── plugins/
+│   └── agentic-skills/
+│       ├── .claude-plugin/
+│       │   └── plugin.json
+│       └── skills/
+│           ├── jules-wrangler/
+│           │   ├── SKILL.md
+│           │   ├── TODO.md
+│           │   └── references/
+│           └── github-babysitter/
+│               ├── SKILL.md
+│               └── references/
+├── tests/
+│   ├── fixtures/
+│   └── run_all.sh
+├── pr-orchestrator/        # legacy, not shipped in the marketplace plugin
+└── github_pro_babysitter/  # legacy, not shipped in the marketplace plugin
 ```
 
-## Installation
+Generated validation reports under `tests/results/` are not installable skill
+documentation.
 
-### Claude Code / Cowork
-Each skill directory can be packaged as a `.skill` file (a zip archive) and installed via the skill installer.
+## Claude Code Install
 
-### Cursor / Codex CLI / Gemini
-Point the agent at the `SKILL.md` file in the skill directory. The agent reads the instructions and follows them. Reference files are loaded on demand.
+Add the marketplace:
 
-## Contributing
+```text
+/plugin marketplace add darksheer/agentic-skills
+```
 
-Skills should follow these conventions:
-- Each skill lives in its own directory at the repo root
-- `SKILL.md` is required and contains YAML frontmatter (`name`, `description`) plus markdown instructions
-- Keep `SKILL.md` under 500 lines; use `references/` for detailed documentation
-- Include a `TODO.md` for tracking development progress
-- Skills must work across all four target platforms (Claude, Cursor, Codex, Gemini)
+Install the plugin:
+
+```text
+/plugin install agentic-skills@agentic-skills
+```
+
+Update later:
+
+```text
+/plugin marketplace update
+```
+
+For local development, run Claude Code against the plugin directory:
+
+```bash
+claude --plugin-dir ./plugins/agentic-skills
+```
+
+## Codex Install
+
+Install each public skill directly from its GitHub path:
+
+```text
+$skill-installer install https://github.com/darksheer/agentic-skills/tree/main/plugins/agentic-skills/skills/jules-wrangler
+$skill-installer install https://github.com/darksheer/agentic-skills/tree/main/plugins/agentic-skills/skills/github-babysitter
+```
+
+Restart Codex after installing or updating skills.
+
+## Configuration
+
+`jules-wrangler` reads `.jules-wrangler.yml`. During migration it also falls
+back to `.jules-triage.yml` when the new config file is absent.
+
+`github-babysitter` reads `.github-babysitter.yml`. It understands legacy
+`.pr-orchestrator.yml` and `.github-pro-babysitter.yml` configs for migration,
+but new work should use `.github-babysitter.yml`.
+
+## Tests
+
+```bash
+./tests/run_all.sh structural
+./tests/run_all.sh fixtures
+```
+
+`structural` validates plugin and marketplace manifests, canonical skill
+frontmatter, and referenced docs. `fixtures` validates Jules session
+classification and the Jules-to-GitHub-Babysitter handoff payload.
+
+Live Jules API tiers still exist for contract and dry-run checks:
+
+```bash
+./tests/run_all.sh api
+./tests/run_all.sh pipeline
+```
+
+Those require `JULES_API_KEY` in the environment or repo-root `.env`.
+
+## Release Notes
+
+The plugin and marketplace are both versioned `0.1.0`. Bump
+`plugins/agentic-skills/.claude-plugin/plugin.json` and
+`.claude-plugin/marketplace.json` together for released updates.
 
 ## License
 
-Apache License 2.0 — see [LICENSE](./LICENSE) for details.
+Apache License 2.0. See [LICENSE](./LICENSE).

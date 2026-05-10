@@ -2,10 +2,11 @@
 
 ## Phase 1: Validation & Testing
 
-- [ ] **Test on a real PR** — Pick a repo with CodeRabbit or Gemini Code Assist already installed. Run the skill against an open PR to validate detection, invocation, collection, and triage phases end-to-end. Start with a small PR (< 50 changed lines) to keep the feedback loop tight.
+- [x] **Test on a real PR (read-only)** — Validated against `darksheer/arc-powerup#96`; CodeRabbit skipped the bot-authored PR and CI failures were collected. External comments/fixes still require explicit approval.
 - [ ] **Test cross-platform invocation** — Verify the skill works from Claude Code, Cursor, Codex CLI, and Gemini. Confirm the adaptive GitHub layer (MCP → `gh` → API) selects the right tier in each environment.
 - [ ] **Test the self-review loop guard** — Intentionally trigger a cycle where the orchestrator pushes a fix and CodeRabbit/Gemini auto-reviews it. Confirm the commit-author filter prevents infinite loops and the `max_iterations` cap holds.
 - [ ] **Test autonomy modes** — Run the skill with each autonomy setting (`full`, `approve-high-risk`, `approve-all`) and verify the behavior matches the spec.
+- [ ] **Add bot-PR fixture** — Cover CodeRabbit "Bot user detected" skip comments and dependency PR CI-failure routing.
 
 ## Phase 2: Eval Suite & Benchmarking
 
@@ -30,6 +31,7 @@
 - [ ] **Description optimization** — Run the skill-creator's `run_loop.py` description optimizer to fine-tune triggering accuracy across edge cases.
 - [ ] **Add more review tools** — Extend `references/review-tools.md` with: Amazon CodeGuru, Sourcery, Sweep, Ellipsis, Bito, and any new entrants. Follow the "Adding a New Tool" template.
 - [ ] **Config generator** — Add a guided setup mode where the skill inspects a repo and generates a starter `.pr-orchestrator.yml` with sensible defaults based on what's detected.
+- [ ] **No-findings report path** — Add fixture coverage for PRs where reviewers are skipped by policy and CI is the only blocker.
 - [ ] **Reduce SKILL.md token footprint** — Profile how many tokens SKILL.md consumes and look for sections that can be moved to references without hurting usability. Target: < 400 lines for the core file.
 
 ## Phase 6: Advanced Features

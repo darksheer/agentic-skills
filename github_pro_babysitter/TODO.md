@@ -4,7 +4,7 @@
 
 - [x] Replace copied PR Orchestrator skill content with GitHub health monitoring instructions.
 - [x] Validate against a real `darksheer/` repo using read-only `gh` commands.
-- [ ] Add automated structural tests for this skill once the repo test suite expands beyond `jules-triage`.
+- [ ] Keep this legacy wrapper excluded from marketplace structural tests unless migration compatibility needs coverage.
 - [ ] Test optional Slack/GitHub issue digest posting with explicit user approval.
 
 ## Improvements

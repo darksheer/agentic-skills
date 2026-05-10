@@ -30,6 +30,12 @@ Post this as a PR comment and output locally after the review cycle completes. A
 
 {tool_notes — e.g., "Jules was skipped due to budget constraints"}
 
+### Skipped or Policy-Limited Tools
+
+| Tool | Reason | Override Available | Action Taken |
+|------|--------|--------------------|--------------|
+| {tool_name} | {e.g., bot-authored PR skipped by tool policy} | {yes/no} | {reported only / user approved override} |
+
 ---
 
 ## Findings

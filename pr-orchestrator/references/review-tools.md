@@ -25,6 +25,11 @@ This document covers detection, invocation, output parsing, and interaction for 
 
 **Auto-review (default)**: CodeRabbit auto-reviews every PR on open if the GitHub App is installed. No action needed — just wait for it to post.
 
+If CodeRabbit posts a skip status such as "Bot user detected," treat the tool as
+`skipped` with a reason. Do not post `@coderabbitai review` automatically for
+that PR unless the user explicitly requested an override or config allows
+bot-authored PR review triggers.
+
 **On-demand via PR comment**:
 ```
 @coderabbitai review

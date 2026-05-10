@@ -1,13 +1,13 @@
 # Configuration Schema
 
-Full schema for `.jules-triage.yml`.
+Full schema for `.jules-wrangler.yml`. Legacy `.jules-triage.yml` is read only as a migration fallback when the canonical config is absent.
 
 ---
 
 ## Complete Example
 
 ```yaml
-# .jules-triage.yml — Jules Triage Configuration
+# .jules-wrangler.yml — Jules Wrangler Configuration
 # Place in repo root or workspace root
 
 # Autonomy mode — controls how much the skill does without asking
@@ -136,12 +136,12 @@ notifications:
   github_issue_repo: ""   # e.g., "owner/ops-tracking"
 
   # Label for tracking issues
-  github_issue_label: "jules-triage"
+  github_issue_label: "jules-wrangler"
 
 # Session tracking — how to remember what's been triaged
 tracking:
   # Where to store triage state
-  # local: file in workspace (.jules-triage-state.json)
+  # local: file in workspace (.jules-wrangler-state.json)
   # github: as issue comments on tracking repo
   store: local
 
@@ -244,7 +244,7 @@ When false, PRs are created but not automatically handed to github-babysitter pr
 - **Values**: `local`, `github`
 - **Default**: `local`
 
-`local` stores state in `.jules-triage-state.json` in the workspace. `github` posts tracking comments on a designated issue/repo for team visibility.
+`local` stores state in `.jules-wrangler-state.json` in the workspace. `github` posts tracking comments on a designated issue/repo for team visibility.
 
 ---
 
@@ -255,6 +255,9 @@ These override config file values:
 | Variable | Overrides | Description |
 |----------|-----------|-------------|
 | `JULES_API_KEY` | (auth) | Jules API key |
-| `JULES_TRIAGE_AUTONOMY` | `autonomy` | Autonomy mode |
-| `JULES_TRIAGE_REPOS` | `repositories` | Comma-separated repo list |
-| `JULES_TRIAGE_MIN_CONFIDENCE` | `promotion_criteria.min_confidence` | Score threshold |
+| `JULES_WRANGLER_AUTONOMY` | `autonomy` | Autonomy mode |
+| `JULES_WRANGLER_REPOS` | `repositories` | Comma-separated repo list |
+| `JULES_WRANGLER_MIN_CONFIDENCE` | `promotion_criteria.min_confidence` | Score threshold |
+
+Legacy `JULES_TRIAGE_*` variables map to the same fields when the corresponding
+`JULES_WRANGLER_*` variable is unset.

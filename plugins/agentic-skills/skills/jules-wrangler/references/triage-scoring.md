@@ -1,6 +1,6 @@
 # Triage Scoring System
 
-How the jules-triage skill evaluates whether a completed Jules session should be promoted to a PR.
+How the jules-wrangler skill evaluates whether a completed Jules session should be promoted to a PR.
 
 ---
 

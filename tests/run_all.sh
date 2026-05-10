@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Test runner for agentic-skills
-# Run all test tiers: structural → fixtures → API contract → dry-run pipeline
+# Run test tiers: structural → fixtures → API contract → dry-run pipeline
 #
 # Usage:
-#   ./tests/run_all.sh           # run everything
+#   ./tests/run_all.sh             # run everything
 #   ./tests/run_all.sh structural  # just structural checks
 #   ./tests/run_all.sh fixtures    # fixture-backed Jules tests
 #   ./tests/run_all.sh api         # just API contract tests
@@ -35,10 +35,61 @@ run_structural() {
   echo "═══ TIER 1: Structural Validation ═══"
   echo ""
 
-  # Only validate jules-triage
-  for skill_dir in ./jules-triage; do
+  marketplace_manifest="./.claude-plugin/marketplace.json"
+  plugin_manifest="./plugins/agentic-skills/.claude-plugin/plugin.json"
+  plugin_root="./plugins/agentic-skills"
+  skills_root="$plugin_root/skills"
+
+  echo "  [Plugin Manifests]"
+  if jq -e . "$marketplace_manifest" > /dev/null 2>&1; then
+    pass "Marketplace manifest parses as JSON"
+  else
+    fail "Marketplace manifest is missing or invalid JSON: $marketplace_manifest"
+  fi
+
+  if jq -e . "$plugin_manifest" > /dev/null 2>&1; then
+    pass "Plugin manifest parses as JSON"
+  else
+    fail "Plugin manifest is missing or invalid JSON: $plugin_manifest"
+  fi
+
+  marketplace_source=$(jq -r '.plugins[]? | select(.name == "agentic-skills") | .source' "$marketplace_manifest" 2>/dev/null || true)
+  if [ "$marketplace_source" = "./plugins/agentic-skills" ] && [ -d "$marketplace_source" ]; then
+    pass "Marketplace source path exists: $marketplace_source"
+  else
+    fail "Marketplace source path is missing or unexpected: ${marketplace_source:-<empty>}"
+  fi
+
+  if jq -e '.name == "agentic-skills" and .owner.name == "darksheer" and ([.plugins[]? | select(.name == "agentic-skills" and .source == "./plugins/agentic-skills" and .version == "0.1.0")] | length == 1)' "$marketplace_manifest" > /dev/null 2>&1; then
+    pass "Marketplace manifest has expected plugin entry"
+  else
+    fail "Marketplace manifest missing expected plugin entry"
+  fi
+
+  if jq -e '.name == "agentic-skills" and .version == "0.1.0" and .author.name == "darksheer"' "$plugin_manifest" > /dev/null 2>&1; then
+    pass "Plugin manifest has expected name, version, and author"
+  else
+    fail "Plugin manifest missing expected name/version/author"
+  fi
+
+  for required_skill in jules-wrangler github-babysitter; do
+    if [ -f "$skills_root/$required_skill/SKILL.md" ]; then
+      pass "Plugin skill exists: $required_skill/SKILL.md"
+    else
+      fail "Plugin skill missing: $required_skill/SKILL.md"
+    fi
+  done
+
+  while read -r skill_dir; do
+    [ -z "$skill_dir" ] && continue
     skill_name=$(basename "$skill_dir")
     echo "  [$skill_name]"
+
+    if [ ! -f "$skill_dir/SKILL.md" ]; then
+      fail "$skill_name: missing SKILL.md"
+      echo ""
+      continue
+    fi
 
     # Check SKILL.md exists and has frontmatter
     if head -1 "$skill_dir/SKILL.md" | grep -q "^---"; then
@@ -84,15 +135,14 @@ run_structural() {
       done < <(grep -Eo 'references/[a-z0-9_-]+\.md' "$skill_dir/SKILL.md" 2>/dev/null | sort -u)
     fi
 
-    # Check for TODO.md
-    if [ -f "$skill_dir/TODO.md" ]; then
-      pass "$skill_name: has TODO.md"
-    else
-      echo "  ⚠ $skill_name: no TODO.md (optional)"
-    fi
-
     echo ""
-  done
+  done < <(find "$skills_root" -mindepth 1 -maxdepth 1 -type d | sort)
+
+  if [ -e ./jules-triage/SKILL.md ] || [ -e ./github-babysitter/SKILL.md ]; then
+    fail "Top-level duplicate canonical skill files must not exist"
+  else
+    pass "No top-level duplicate canonical skill files"
+  fi
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -249,7 +299,7 @@ run_fixtures() {
   echo ""
   echo "  [GitHub Babysitter Handoff Payload]"
   handoff=$(jq -n --slurpfile session "$pr_session_file" '{
-    source_skill: "jules-triage",
+    source_skill: "jules-wrangler",
     target_skill: "github-babysitter",
     mode: "pr-care",
     session_id: $session[0].id,
@@ -265,7 +315,7 @@ run_fixtures() {
   }')
 
   if printf "%s" "$handoff" | jq -e '
-    .source_skill == "jules-triage" and
+    .source_skill == "jules-wrangler" and
     .target_skill == "github-babysitter" and
     .mode == "pr-care" and
     (.session_id | type == "string" and length > 0) and

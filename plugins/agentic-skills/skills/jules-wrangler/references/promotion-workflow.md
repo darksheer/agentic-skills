@@ -34,7 +34,7 @@ When the session used `automationMode: "AUTO_CREATE_PR"`, Jules already opened a
 
 3. **Add triage annotation** as a PR comment:
    ```markdown
-   ## Jules Triage Assessment
+   ## Jules Wrangler Assessment
    
    | Attribute | Value |
    |-----------|-------|
@@ -50,7 +50,7 @@ When the session used `automationMode: "AUTO_CREATE_PR"`, Jules already opened a
    ```
 
 4. **Add labels**:
-   - `jules-triage`
+   - `jules-wrangler`
    - Category label (e.g., `bug-fix`, `security`)
    - `auto-promoted` (if no human approval was needed)
 
@@ -96,7 +96,7 @@ When the session completed without `AUTO_CREATE_PR`, we need to create the PR ma
    Triage score: {score}
    Category: {category}
    
-   Signed-off-by: jules-triage"
+   Signed-off-by: jules-wrangler"
    git push origin jules/{session_short}/{category}
    ```
 
@@ -126,10 +126,10 @@ When the session completed without `AUTO_CREATE_PR`, we need to create the PR ma
    
    ---
    
-   *This PR was auto-promoted by jules-triage. GitHub Babysitter will manage PR care.*
+   *This PR was auto-promoted by jules-wrangler. GitHub Babysitter will manage PR care.*
    EOF
    )" \
-     --label "jules-triage,{category}"
+     --label "jules-wrangler,{category}"
    ```
 
 5. **Hand off to github-babysitter pr-care** (same as Workflow A step 5)
@@ -172,7 +172,7 @@ it in the PR comment/body or local report:
 
 ```json
 {
-  "source_skill": "jules-triage",
+  "source_skill": "jules-wrangler",
   "target_skill": "github-babysitter",
   "mode": "pr-care",
   "session_id": "session_abc123",
@@ -228,7 +228,7 @@ If a promoted PR causes issues after merge:
 
 ## State Tracking
 
-After promotion, record in `.jules-triage-state.json`:
+After promotion, record in `.jules-wrangler-state.json`:
 
 ```json
 {

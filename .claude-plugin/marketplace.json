@@ -1,0 +1,14 @@
+{
+  "name": "agentic-skills",
+  "owner": {
+    "name": "darksheer"
+  },
+  "plugins": [
+    {
+      "name": "agentic-skills",
+      "source": "./plugins/agentic-skills",
+      "description": "Jules Wrangler and GitHub Babysitter skills for agentic coding workflows.",
+      "version": "0.1.0"
+    }
+  ]
+}

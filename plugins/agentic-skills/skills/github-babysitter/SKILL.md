@@ -173,11 +173,11 @@ A PR is ready only when:
 
 ## Jules Handoff
 
-Accept handoff payloads from `jules-triage`/`jules-wrangler` with:
+Accept handoff payloads from `jules-wrangler` (or legacy `jules-triage`) with:
 
 ```json
 {
-  "source_skill": "jules-triage",
+  "source_skill": "jules-wrangler",
   "target_skill": "github-babysitter",
   "mode": "pr-care",
   "session_id": "session_abc123",

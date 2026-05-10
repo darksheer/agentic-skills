@@ -151,6 +151,12 @@ filters:
   # Skip review if PR has fewer than N changed lines
   min_changed_lines: 1
 
+  # Bot-authored dependency/update PRs often have reviewer-specific skip rules.
+  bot_prs:
+    trigger_reviewers: false   # require explicit opt-in before posting @review commands
+    require_ci_green: true
+    dependency_update_focus: [lockfile, advisories, release_notes, engines]
+
 # --- GitHub Interaction ---
 github:
   # Preferred interaction method

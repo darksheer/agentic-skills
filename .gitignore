@@ -1,2 +1,10 @@
 .DS_Store
 *.skill
+
+# Secrets
+.env
+.env.*
+secrets/
+
+# Generated validation reports
+tests/results/

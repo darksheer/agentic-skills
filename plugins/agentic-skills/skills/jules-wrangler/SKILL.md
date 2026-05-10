@@ -1,5 +1,5 @@
 ---
-name: jules-triage
+name: jules-wrangler
 description: >
   Scheduled triage agent for Google Jules coding sessions. Polls the Jules API for
   completed sessions (from agents like Bolt, Palette, and one-off code reviews),
@@ -14,7 +14,7 @@ description: >
   Palette sessions, or managing Jules agents across repos.
 ---
 
-# Jules Triage
+# Jules Wrangler
 
 A scheduled triage agent that bridges Google Jules coding sessions with your GitHub PR workflow.
 
@@ -52,12 +52,12 @@ Jules operates asynchronously — it performs code reviews, generates fixes, and
 
 ## Configuration
 
-The skill reads `.jules-triage.yml` from the repo root (or a global config). If absent, it uses sensible defaults.
+The skill reads `.jules-wrangler.yml` from the repo root or global config, then falls back to legacy `.jules-triage.yml`. If absent, it uses sensible defaults.
 
 Read `references/config-schema.md` for the full schema. Key sections:
 
 ```yaml
-# .jules-triage.yml
+# .jules-wrangler.yml
 autonomy: approve-high-risk   # full | approve-high-risk | approve-all
 schedule: "0 9 * * *"         # cron expression for scheduled runs
 repositories:                  # repos to monitor (empty = all)
@@ -88,7 +88,7 @@ The skill requires a Jules API key. It looks for credentials in this order:
 
 1. **Environment variable**: `JULES_API_KEY`
 2. **`.env` file**: in the repo root or workspace root
-3. **Config file**: `jules_api_key` field in `.jules-triage.yml`
+3. **Config file**: `jules_api_key` field in `.jules-wrangler.yml` or legacy `.jules-triage.yml`
 
 API keys are managed at https://jules.google.com/settings (max 3 keys per account).
 
@@ -360,7 +360,7 @@ The skill creates a PR from the patch:
 4. Open a PR with:
    - Title from `gitPatch.suggestedCommitMessage` (first line)
    - Body containing session context, triage score, and link to Jules session URL (`session.url`)
-   - Labels: `jules-triage`, agent name label (e.g., `bolt`, `palette`)
+   - Labels: `jules-wrangler`, agent name label (e.g., `bolt`, `palette`)
 5. Hand off to github-babysitter pr-care
 
 ### Handoff to GitHub Babysitter
@@ -381,7 +381,7 @@ GitHub Babysitter takes over from here: running PR care, triaging review and CI 
 After each triage run, generate a structured digest:
 
 ```markdown
-# Jules Triage Digest — {date}
+# Jules Wrangler Digest — {date}
 
 ## Summary
 - Sessions scanned: {total}
@@ -439,7 +439,7 @@ Over time, adjust:
 
 ## Scheduling
 
-Use the `/schedule` skill to set up daily runs (e.g., "Schedule jules-triage daily at 9am"). Manual invocation also works: "Triage my Jules sessions now" or "Triage Jules session {session_id} specifically".
+Use the `/schedule` skill to set up daily runs (e.g., "Schedule jules-wrangler daily at 9am"). Manual invocation also works: "Triage my Jules sessions now" or "Triage Jules session {session_id} specifically".
 
 ---
 
@@ -454,7 +454,7 @@ Read `references/jules-api.md` for complete endpoint documentation, request patt
 | File | When to Read |
 |------|-------------|
 | `references/jules-api.md` | When making Jules API calls or debugging responses |
-| `references/config-schema.md` | When parsing or generating `.jules-triage.yml` |
+| `references/config-schema.md` | When parsing or generating `.jules-wrangler.yml` or migrating `.jules-triage.yml` |
 | `references/triage-scoring.md` | When evaluating session quality or tuning thresholds |
 | `references/promotion-workflow.md` | When creating PRs from sessions or handing off |
 | `references/digest-template.md` | When generating the daily report |
