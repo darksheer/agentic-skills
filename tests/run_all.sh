@@ -214,10 +214,19 @@ run_fixtures() {
 
   echo ""
   echo "  [Session Classification]"
-  completed=$(jq '[.sessions[] | select(.state == "COMPLETED")] | length' "$sessions_file")
-  awaiting=$(jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length' "$sessions_file")
-  active=$(jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length' "$sessions_file")
-  failed_sessions=$(jq '[.sessions[] | select(.state == "FAILED")] | length' "$sessions_file")
+  # ⚡ Bolt: Batch jq operations to avoid spawning multiple processes and parsing the same JSON string repeatedly.
+  # This reduces execution overhead significantly.
+  read -r completed awaiting active failed_sessions with_changeset with_pr no_output <<< $(jq -r '
+    [
+      ([.sessions[] | select(.state == "COMPLETED")] | length),
+      ([.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+      ([.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+      ([.sessions[] | select(.state == "FAILED")] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+      ([.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length)
+    ] | @tsv
+  ' "$sessions_file")
 
   [ "$completed" = "2" ] && pass "Classified 2 completed sessions" || fail "Expected 2 completed sessions, got $completed"
   [ "$awaiting" = "2" ] && pass "Classified 2 awaiting-feedback sessions" || fail "Expected 2 awaiting-feedback sessions, got $awaiting"
@@ -226,9 +235,6 @@ run_fixtures() {
 
   echo ""
   echo "  [Output Detection]"
-  with_changeset=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length' "$sessions_file")
-  with_pr=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length' "$sessions_file")
-  no_output=$(jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length' "$sessions_file")
 
   [ "$with_changeset" = "2" ] && pass "Detected 2 sessions with changeSet output" || fail "Expected 2 sessions with changeSet output, got $with_changeset"
   [ "$with_pr" = "1" ] && pass "Detected 1 session with pullRequest output" || fail "Expected 1 session with pullRequest output, got $with_pr"
@@ -509,29 +515,33 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  # ⚡ Bolt: Batch jq operations to avoid spawning multiple processes and parsing the same JSON string repeatedly.
+  # This reduces execution overhead significantly.
+  read -r total completed awaiting active bolt_count palette_count oneoff_count with_changeset with_pr no_output <<< $(echo "$sessions" | jq -r '
+    [
+      (.sessions | length),
+      ([.sessions[] | select(.state == "COMPLETED")] | length),
+      ([.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+      ([.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+      ([.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length),
+      ([.sessions[] | select(.title | test("^Palette"))] | length),
+      ([.sessions[] | select(.title | test("^Bolt|^⚡ Bolt|^Palette") | not)] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+      ([.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length)
+    ] | @tsv
+  ')
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
   # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
-
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
   # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
-
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
