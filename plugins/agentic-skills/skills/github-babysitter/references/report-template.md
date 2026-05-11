@@ -1,5 +1,9 @@
 # Report Templates
 
+Use these templates only when the user explicitly asks for a report/file/digest
+or config enables `reporting.output_local`. Default `$github-babysitter` output
+belongs in chat and should not create markdown files.
+
 ## Repo-Rounds
 
 ```markdown
@@ -8,6 +12,7 @@
 Generated: {timestamp}
 Scope: {org_or_repos}
 Mode: read-only | approved writes
+Data sources: {commands_or_api_calls_used}
 
 ## Scorecard
 
@@ -19,15 +24,21 @@ Mode: read-only | approved writes
 
 1. {repo}: {risk} - {recommended_action}
 
+## Data Collection
+
+| Repo | Source | Status | Notes |
+| --- | --- | --- | --- |
+| owner/repo | gh/API/connector | complete/partial/failed | {fallback_or_error} |
+
 ## Blocked PRs
 
-| PR | Reason | Recommended Action |
-| --- | --- | --- |
+| PR | Classification | Evidence | Recommended Action |
+| --- | --- | --- | --- |
 
 ## Stale or Noisy Issues
 
-| Issue | Signal | Recommended Action |
-| --- | --- | --- |
+| Issue | Classification | Evidence | Recommended Action |
+| --- | --- | --- | --- |
 
 ## Workflow Health
 
@@ -52,6 +63,7 @@ Mode: read-only | approved writes
 Generated: {timestamp}
 PR: {url}
 Mode: read-only | approved writes
+Data sources: {commands_or_api_calls_used}
 
 ## Status
 
@@ -62,11 +74,19 @@ Mode: read-only | approved writes
 | Mergeable | clean |
 | Review decision | approved |
 | Checks | passing |
+| Merge readiness | ready-to-merge/merged/blocked-needs-approval/blocked-needs-human/blocked-external/unknown |
+| Loop state | draft/conflicted/behind-base/failing-ci/waiting-ci/changes-requested/unresolved-review/needs-review/reviewer-skipped/ready-to-merge/merged/blocked-needs-approval/blocked-needs-human/blocked-external |
+
+## State Loop
+
+| Iteration | Start State | Action Taken | Verification | End State |
+| ---: | --- | --- | --- | --- |
+| 1 | failing-ci | triaged failed job and applied local fix | unit test passed | waiting-ci |
 
 ## Findings
 
-| ID | Source | Severity | Decision | Confidence | Notes |
-| --- | --- | --- | --- | --- | --- |
+| ID | Source | Severity | Accuracy | Applicability | Decision | Confidence | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## CI Triage
 
@@ -79,6 +99,7 @@ Mode: read-only | approved writes
 
 ## Merge Readiness
 
+- Verdict: ready-to-merge/merged/blocked-needs-approval/blocked-needs-human/blocked-external/unknown
 - Checks: pass/fail/unknown
 - Reviews: approved/changes-requested/unknown
 - Threads: resolved/unresolved/unknown

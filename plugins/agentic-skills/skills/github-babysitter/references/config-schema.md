@@ -18,7 +18,7 @@ exclude_repositories: []
 include_private: true
 include_archived: false
 
-default_mode: repo-rounds   # repo-rounds | pr-care
+default_mode: pr-care       # pr-care | repo-rounds
 write_actions: false
 autonomy: approve-all       # full | approve-high-risk | approve-all
 
@@ -101,7 +101,7 @@ compliance:
   additional_policy_files: []
 
 reporting:
-  output_local: true
+  output_local: false
   local_path: tests/results/github-babysitter/
   post_to_github: false
   post_to_slack: false
@@ -124,6 +124,16 @@ learning:
 - trigger review bots or paid automation
 
 It may still recommend those actions in an approval queue.
+
+## Reporting Defaults
+
+`reporting.output_local` defaults to `false`. GitHub Babysitter should not create
+markdown files, report files, or `tests/results/` artifacts unless the user
+explicitly asks for a report/file/digest or config opts in.
+
+`default_mode` defaults to `pr-care`. Broad repo-rounds scans are opt-in by user
+request or config because the normal babysitter job is to move PRs toward merge
+readiness.
 
 ## Environment Variables
 
