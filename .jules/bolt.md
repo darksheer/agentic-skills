@@ -1,0 +1,3 @@
+## 2024-06-25 - Bash Subprocess Overhead with JSON parsing
+**Learning:** Sequential multiple `jq` calls on identical JSON payloads inside bash loops or test scripts incur a significant and measurable performance penalty due to sub-process spawning overhead. When a payload needs to be interrogated for multiple distinct metrics, dispatching single `jq` instances sequentially multiplies the start-up time overhead of `jq`.
+**Action:** Consolidate multiple metrics extraction operations into a single, batched `jq` query and assign the resultant multiple metrics simultaneously in bash using string array decomposition (e.g. `read -r var1 var2 <<< "$(jq -r '...' file)"`). This dramatically speeds up repeated bash parses.
