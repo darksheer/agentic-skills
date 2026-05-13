@@ -1,0 +1,3 @@
+## 2024-05-13 - Avoid Repeated jq Process Spawns
+**Learning:** In bash test suites, repeatedly spawning `jq` processes to query different properties from the same JSON string or file creates a significant performance bottleneck (e.g., 3-4x slower execution).
+**Action:** Always combine multiple `jq` extractions into a single `jq` call that returns an array piped to `@tsv`, and read the values simultaneously using bash's `read var1 var2 <<< $(jq -r '...' file)`.
