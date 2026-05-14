@@ -509,35 +509,38 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  # Bolt Performance Optimization: Combine 10 jq calls into 1
+  read total completed awaiting active bolt_count palette_count oneoff_count with_changeset with_pr no_output <<< $(echo "$sessions" | jq -r '
+    (.sessions // []) as $s |
+    ($s | length) as $total |
+    ([$s[] | select(.state == "COMPLETED")] | length) as $completed |
+    ([$s[] | select(.state == "AWAITING_USER_FEEDBACK")] | length) as $awaiting |
+    ([$s[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length) as $active |
+    ([$s[] | select((.title // "") | test("^Bolt|^⚡ Bolt"))] | length) as $bolt |
+    ([$s[] | select((.title // "") | test("^Palette"))] | length) as $palette |
+    ([$s[] | select((.title // "") | test("^Bolt|^⚡ Bolt|^Palette") | not)] | length) as $oneoff |
+    ([$s[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length) as $with_changeset |
+    ([$s[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length) as $with_pr |
+    ([$s[] | select(.outputs == null or (.outputs | length) == 0)] | length) as $no_output |
+    "\($total) \($completed) \($awaiting) \($active) \($bolt) \($palette) \($oneoff) \($with_changeset) \($with_pr) \($no_output)"
+  ')
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
   # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
-
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
   # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
-
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
   echo "  [Triage Scoring - Dry Run]"
   # Pick a completed session with a changeSet and simulate scoring
-  candidate=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
+  candidate=$(echo "$sessions" | jq '(.sessions // []) | [.[] | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
 
   if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
     c_title=$(echo "$candidate" | jq -r '.title')
@@ -605,7 +608,7 @@ run_pipeline() {
 
   echo ""
   echo "  [Question Detection - AWAITING_USER_FEEDBACK]"
-  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
+  awaiting_session=$(echo "$sessions" | jq -r '(.sessions // []) | [.[] | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
   if [ -n "$awaiting_session" ]; then
     activities=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$awaiting_session/activities?pageSize=50" \
