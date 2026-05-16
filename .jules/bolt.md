@@ -1,0 +1,3 @@
+## 2024-03-24 - Batching `jq` Queries to Reduce Bash Subshell Overhead
+**Learning:** Calling `jq` repeatedly to extract multiple individual variables from the same JSON string creates significant performance bottlenecks due to excessive subshell and process spawning overhead.
+**Action:** Always batch JSON extraction logic into a single `jq` invocation using arrays and the `@tsv` filter. Extract multiple results simultaneously via a `read -r var1 var2 ... < <(...)` redirection in Bash, making sure to handle potential `null` arrays with the `?` operator.
