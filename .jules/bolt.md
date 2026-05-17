@@ -1,0 +1,3 @@
+## 2024-05-24 - Batching `jq` Queries in Bash Scripts
+**Learning:** Calling `jq` repeatedly on the same JSON file or string in bash scripts introduces significant subprocess overhead, especially when extracting multiple distinct fields or arrays. This is a noticeable performance anti-pattern.
+**Action:** When extracting multiple values from the same JSON object or string in bash tests, batch queries into a single `jq` call using arrays `[...]` and the `@tsv` filter. Simultaneously assign the output variables using `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '...' file.json)"`. Remember to use the `?` operator (e.g. `[]?`) to handle potential nulls safely.
