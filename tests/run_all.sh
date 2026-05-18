@@ -214,10 +214,14 @@ run_fixtures() {
 
   echo ""
   echo "  [Session Classification]"
-  completed=$(jq '[.sessions[] | select(.state == "COMPLETED")] | length' "$sessions_file")
-  awaiting=$(jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length' "$sessions_file")
-  active=$(jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length' "$sessions_file")
-  failed_sessions=$(jq '[.sessions[] | select(.state == "FAILED")] | length' "$sessions_file")
+  # Optimization: Batch jq queries
+  out1=$(jq -r '[
+    ([.sessions[]? | select(.state == "COMPLETED")] | length),
+    ([.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+    ([.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+    ([.sessions[]? | select(.state == "FAILED")] | length)
+  ] | @tsv' "$sessions_file")
+  read -r completed awaiting active failed_sessions <<< "$out1"
 
   [ "$completed" = "2" ] && pass "Classified 2 completed sessions" || fail "Expected 2 completed sessions, got $completed"
   [ "$awaiting" = "2" ] && pass "Classified 2 awaiting-feedback sessions" || fail "Expected 2 awaiting-feedback sessions, got $awaiting"
@@ -226,9 +230,13 @@ run_fixtures() {
 
   echo ""
   echo "  [Output Detection]"
-  with_changeset=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length' "$sessions_file")
-  with_pr=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length' "$sessions_file")
-  no_output=$(jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length' "$sessions_file")
+  # Optimization: Batch jq queries
+  out2=$(jq -r '[
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+    ([.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length)
+  ] | @tsv' "$sessions_file")
+  read -r with_changeset with_pr no_output <<< "$out2"
 
   [ "$with_changeset" = "2" ] && pass "Detected 2 sessions with changeSet output" || fail "Expected 2 sessions with changeSet output, got $with_changeset"
   [ "$with_pr" = "1" ] && pass "Detected 1 session with pullRequest output" || fail "Expected 1 session with pullRequest output, got $with_pr"
@@ -509,35 +517,45 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  # Optimization: Batch jq queries
+  out3=$(echo "$sessions" | jq -r '[
+    (.sessions | length),
+    ([.sessions[]? | select(.state == "COMPLETED")] | length),
+    ([.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+    ([.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length)
+  ] | @tsv')
+  read -r total completed awaiting active <<< "$out3"
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
-  # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
+  # Optimization: Batch jq queries
+  out4=$(echo "$sessions" | jq -r '[
+    ([.sessions[]? | select(.title | test("^Bolt|^⚡ Bolt"))] | length),
+    ([.sessions[]? | select(.title | test("^Palette"))] | length),
+    ([.sessions[]? | select(.title | test("^Bolt|^⚡ Bolt|^Palette") | not)] | length)
+  ] | @tsv')
+  read -r bolt_count palette_count oneoff_count <<< "$out4"
 
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
-  # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
+  # Optimization: Batch jq queries
+  out5=$(echo "$sessions" | jq -r '[
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+    ([.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length)
+  ] | @tsv')
+  read -r with_changeset with_pr no_output <<< "$out5"
 
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
   echo "  [Triage Scoring - Dry Run]"
   # Pick a completed session with a changeSet and simulate scoring
-  candidate=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
+  candidate=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
 
   if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
     c_title=$(echo "$candidate" | jq -r '.title')
@@ -605,7 +623,7 @@ run_pipeline() {
 
   echo ""
   echo "  [Question Detection - AWAITING_USER_FEEDBACK]"
-  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
+  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
   if [ -n "$awaiting_session" ]; then
     activities=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$awaiting_session/activities?pageSize=50" \
