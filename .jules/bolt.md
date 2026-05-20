@@ -1,0 +1,3 @@
+## 2026-05-20 - Bash jq query batching
+**Learning:** Calling `jq` repeatedly on the same JSON blob is computationally expensive in bash loops. Combining multiple `jq` extractions into an array and outputting them via `@tsv` allows a single `jq` fork to export multiple variables directly into bash using `IFS=$'\t' read -r var1 var2 < <(...)`. Null-safe iteration operator `?` is crucial when working with empty response bodies (`[.sessions[]?]`).
+**Action:** Always batch JSON extraction logic in shell scripts where multiple fields are needed from the same object or array to avoid process forking bottlenecks.
