@@ -1,0 +1,3 @@
+## 2024-05-23 - Batching `jq` Calls in Bash Scripts
+**Learning:** In bash test suites, repeatedly spawning the `jq` process and parsing the same JSON content multiple times creates significant execution overhead. For example, extracting multiple counts or fields from the same JSON string sequentially using separate `jq` commands is inefficient.
+**Action:** Always batch `jq` queries into a single call using arrays and `@tsv`, and read the outputs into variables simultaneously using `read -r`. Ensure to handle potential `null` arrays gracefully, for example by using the `?` operator. This reduces overhead and speeds up test script execution.
