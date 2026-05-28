@@ -1,0 +1,3 @@
+## 2024-05-28 - [Performance Improvement: Batch jq queries in bash scripts]
+**Learning:** Calling `jq` repeatedly on the same JSON file or variable in bash scripts introduces significant overhead due to starting a new process and parsing the JSON multiple times.
+**Action:** Instead of calling `jq` multiple times, batch queries into a single `jq` execution by returning an array and using `@tsv`, then use `read -r var1 var2 ... <<< "$(jq -r '...' file)"` to assign the variables in bash simultaneously. Make sure to use the `?` operator for arrays that might be null (e.g., `[.sessions[]?]`).
