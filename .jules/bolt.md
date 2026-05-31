@@ -1,0 +1,3 @@
+## 2025-02-13 - [Bash Scripting: Optimizing Sequential jq Calls]
+**Learning:** Calling `jq` repeatedly on the same file or JSON string within a Bash script is a significant performance bottleneck due to continuous process spawning and redundant JSON parsing.
+**Action:** When extracting multiple values from the same JSON source, batch queries into a single `jq` call using arrays and `@tsv`, and assign them simultaneously using `IFS=$'\t' read -r var1 var2 ... < <(...)` to ensure correct string splitting and reduce subshell overhead. Remember to use the `?` operator for safe navigation on arrays that might be null.
