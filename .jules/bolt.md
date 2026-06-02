@@ -1,0 +1,3 @@
+## 2024-05-24 - [Bash Optimization] jq Overhead
+**Learning:** Sequential `jq` calls within bash scripts represent a significant performance overhead, as each call launches a new `jq` process and reparses the input JSON payload. When extracting multiple values from the same source, this approach scales poorly.
+**Action:** Consolidate sequential `jq` queries into a single batched call. Return values as an array, format with `@tsv`, and load into bash variables using `IFS=$'\t' read -r var1 var2 ... < <(jq -r '...' file.json)`. Ensure to add the `?` operator (e.g. `[.sessions[]?]`) to handle cases where array paths may be null (like when using mock API keys).
