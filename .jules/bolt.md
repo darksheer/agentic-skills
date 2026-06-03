@@ -1,0 +1,3 @@
+## 2024-06-19 - Batched jq Querying in Bash Tests
+**Learning:** In the bash test suite, repeatedly calling `jq` on the same large JSON string for individual fields is a significant performance bottleneck. When a mock API key is used, it returns an error instead of a `.sessions` array, causing `.sessions[]` to fail on `null`.
+**Action:** When working in the bash test suite, always batch multiple JSON field extractions into a single `jq` query using arrays and `@tsv`, and assign them simultaneously using `IFS=$'\t' read -r`. Always use the `?` operator (e.g., `.sessions[]?`) when iterating over arrays to gracefully handle `null` inputs.
