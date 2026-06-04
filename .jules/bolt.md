@@ -1,0 +1,3 @@
+## 2024-06-25 - Batching `jq` Queries & Defensive JSON Parsing in Bash
+**Learning:** Sequential `jq` calls on the same file/JSON string in bash test suites create significant performance overhead because `jq` parsing happens for every variable extraction. Furthermore, without the `?` operator (e.g., `[.sessions[]?]`), unauthenticated API mocks returning `{"error": ...}` instead of lists will cause tests to fail with "Cannot iterate over null".
+**Action:** Always batch `jq` operations into a single query using arrays and `@tsv`, extracting values via `IFS=$'\t' read -r`. Always use the `?` operator defensively when parsing fields that might be absent during mock/failure states.
