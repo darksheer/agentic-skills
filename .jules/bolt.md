@@ -1,0 +1,3 @@
+## 2024-06-07 - [Bash Script Performance & jq error handling]
+**Learning:** In bash test suites, executing `jq` repeatedly on the same JSON output/file can be a performance bottleneck. Additionally, when using a mock API key, the mocked endpoint might return an error JSON without a expected array (like `.sessions`); therefore, `jq` queries must use the `?` operator (e.g., `.sessions[]?`) to gracefully handle null inputs and prevent failures.
+**Action:** When extracting multiple values from a single JSON string/file in bash, batch queries into a single `jq` call using arrays and `@tsv`, and read them into variables simultaneously using `IFS=$'\t' read -r`. Always use the `?` operator when iterating over arrays that might be missing in error responses.
