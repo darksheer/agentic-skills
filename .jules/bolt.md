@@ -1,0 +1,3 @@
+## 2024-06-13 - Batching jq Calls in Bash
+**Learning:** Sequential `jq` calls on the same file or JSON variable introduce massive I/O and process-spawning bottlenecks in bash. Attempting to use basic awk replacements for full `jq` substitution proved challenging to match complex queries or format. However, single `jq` invocations can return arrays that evaluate to tab-separated-values using `@tsv`, enabling simultaneous reading of multiple bash variables.
+**Action:** Always batch related JSON extractions into a single `jq` call using `[...] | @tsv` and `IFS=$'\t' read -r var1 var2 ... <<< "$(jq -r '...' file)"` to avoid spawning multiple `jq` processes.
