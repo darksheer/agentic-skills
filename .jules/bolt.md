@@ -1,0 +1,3 @@
+## 2024-06-15 - Batched jq queries in bash script
+**Learning:** Calling `jq` multiple times on the same payload inside a bash script creates significant process overhead. When refactoring to a batched array constructor outputting to `@tsv`, using `// empty` drops `null` elements entirely instead of yielding a placeholder. This shifts the remaining elements and breaks positional `read` variable assignments.
+**Action:** When batching `jq` array outputs for `read` assignments, allow missing fields to evaluate to `null` to maintain positional alignment instead of using `// empty`. Ensure fields used in `.title | test("...")` are first checked for nullness (e.g., `select(.title and (.title | test("...")))`) to prevent fatal evaluation errors on empty records.
