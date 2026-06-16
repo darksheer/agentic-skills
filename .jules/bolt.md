@@ -1,0 +1,3 @@
+## 2024-06-16 - [Performance Improvement in bash]
+**Learning:** Consolidating repeated `jq` queries into a batched array format using `jq '[query1, query2] | @tsv'` drastically speeds up bash execution by removing subshell/process spawning overhead, though edge cases like missing array sources with `null` need `?` handling (e.g. `sessions[]?`) and `test()` failures on `null` fields need explicit guarding.
+**Action:** Always batch JSON evaluations together in shell environments when mapping properties to variables. When doing this via TSV arrays, `// empty` shouldn't be used within constructors as it shrinks result array length, breaking positional read assignments.
