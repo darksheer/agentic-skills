@@ -509,40 +509,50 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  # PERFORMANCE OPTIMIZATION:
+  # Batch 10 separate jq queries into a single evaluation to save bash forking
+  # and JSON parsing overhead. Expected time savings on large sessions payloads.
+  IFS=$'\t' read -r total completed awaiting active bolt_count palette_count oneoff_count with_changeset with_pr no_output <<< "$(echo "$sessions" | jq -r '[
+    (.sessions | length),
+    ([.sessions[]? | select(.state == "COMPLETED")] | length),
+    ([.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+    ([.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+    ([.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt")))] | length),
+    ([.sessions[]? | select(.title and (.title | test("^Palette")))] | length),
+    ([.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt|^Palette") | not))] | length),
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+    ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+    ([.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length)
+  ] | @tsv')"
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
   # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
-
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
   # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
-
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
   echo "  [Triage Scoring - Dry Run]"
   # Pick a completed session with a changeSet and simulate scoring
-  candidate=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
+  # PERFORMANCE OPTIMIZATION: Extract candidate session and its metadata in one jq pass
+  # Note: patch is extracted separately because jq @tsv escapes newlines in multiline strings,
+  # breaking the grep line-counting logic below.
+  candidate_data=$(echo "$sessions" | jq -r '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // null | if type == "object" then [
+    (.title // ""),
+    (.id // ""),
+    (.sourceContext.source // ""),
+    (if .outputs and (.outputs | length) > 0 then 1 else 0 end)
+  ] | @tsv else empty end')
 
-  if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
-    c_title=$(echo "$candidate" | jq -r '.title')
-    c_id=$(echo "$candidate" | jq -r '.id')
-    c_source=$(echo "$candidate" | jq -r '.sourceContext.source')
+  if [ -n "$candidate_data" ]; then
+    IFS=$'\t' read -r c_title c_id c_source has_output <<< "$candidate_data"
+    patch=$(echo "$sessions" | jq -r '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] | .outputs[0].changeSet.gitPatch.unidiffPatch // ""')
     echo "  Scoring session: $c_title"
     echo "  Source: $c_source"
 
@@ -550,14 +560,12 @@ run_pipeline() {
     score=0
 
     # Factor: has output (proxy for tests pass) → 0.30
-    has_output=$(echo "$candidate" | jq 'if .outputs and (.outputs | length) > 0 then 1 else 0 end')
     if [ "$has_output" = "1" ]; then
       score=$(echo "$score + 30" | bc)
       pass "  Tests/output: +0.30 (has changeSet)"
     fi
 
     # Factor: scope check
-    patch=$(echo "$candidate" | jq -r '.outputs[0].changeSet.gitPatch.unidiffPatch // ""')
     if [ -n "$patch" ]; then
       files_changed=$(echo "$patch" | grep -c "^diff --git" || true)
       if [ "$files_changed" -le 50 ]; then
@@ -605,7 +613,7 @@ run_pipeline() {
 
   echo ""
   echo "  [Question Detection - AWAITING_USER_FEEDBACK]"
-  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
+  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
   if [ -n "$awaiting_session" ]; then
     activities=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$awaiting_session/activities?pageSize=50" \
