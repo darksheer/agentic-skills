@@ -1,0 +1,3 @@
+## 2024-06-27 - [Bash Scripting Performance Pattern in Tests]
+**Learning:** Calling `jq` repeatedly on the same JSON data structure causes significant overhead in bash scripts, especially inside the pipeline dry-run function. It evaluates the same input multiple times, compounding execution time. Furthermore, test inputs might be mocked and return `null` for fields, causing `test()` to throw errors.
+**Action:** Consolidate multiple `jq` invocations into a single array constructor and output via `@tsv`, then read them all at once using `IFS=$'\t' read -r var1 var2...`. Use the `?` operator (e.g., `.sessions[]?`) for null safety during mock test execution, and add null checks before `test()` filters (e.g., `select(.title and (.title | test("...")))`).
