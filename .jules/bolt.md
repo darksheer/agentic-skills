@@ -1,0 +1,3 @@
+## 2024-05-16 - [Batching jq in bash scripts]
+**Learning:** In bash, executing `jq` repeatedly to parse multiple fields from the same JSON string or file adds massive overhead. It is up to 5x faster to batch all queries into a single `jq` command that outputs an array serialized as `@tsv`, and parse it simultaneously using `IFS=$'\t' read -r`.
+**Action:** When extracting multiple values from a single JSON payload in bash test suites, use single-pass `jq` batching instead of independent `jq` invocations. Ensure potential `null` arrays are handled with `?` and fields used with `test()` are checked for nullity to avoid breaking queries.
