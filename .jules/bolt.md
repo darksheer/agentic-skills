@@ -1,0 +1,3 @@
+## 2024-05-24 - Batching jq Queries in Bash Arrays
+**Learning:** Sequential `jq` calls on the same payload in bash are extremely slow. When batching them into a single `jq` call using arrays and `@tsv` to read into bash variables with `IFS=$'\t' read -r`, missing `.sessions` objects (e.g. mock failures) cause fatal errors if not using `?` (e.g. `.sessions[]?`), and `test()` throws errors on null values (e.g. `.title` missing).
+**Action:** Always batch `jq` queries for performance and explicitly guard against null values using `?` for iteration and explicit null checks (e.g., `select(.title and (.title | test("...")))`) before `test()`.
