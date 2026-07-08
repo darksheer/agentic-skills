@@ -1,0 +1,3 @@
+## 2024-05-15 - Bash JSON Processing Performance
+**Learning:** The bash test suite executes many separate sequential `jq` commands against the same large JSON file or payload, suffering significant overhead starting up the `jq` interpreter repeatedly. For example, validating output detection requires three consecutive jq calls over the exact same payload.
+**Action:** When extracting multiple scalar values from the same JSON payload in bash, batch all queries into a single `jq` array constructor, export them as `@tsv`, and load them simultaneously using `IFS=$'\t' read -r var1 var2 ... < <(jq -r '...' "$file")` to drastically reduce interpreter execution overhead.
