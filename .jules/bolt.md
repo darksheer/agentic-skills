@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Batching jq calls and avoiding bc in bash
+**Learning:** Multiple sequential `jq` commands on identical large JSON variables are incredibly slow in bash scripts, as are sequential external `bc` tool spawns. In `tests/run_all.sh`, replacing sequential calls with a batched JSON array extraction into an `@tsv` bash read dramatically drops test run time.
+**Action:** When extracting multiple values from JSON in bash, use `IFS=$'\t' read -r var1 var2 < <(jq -r '[.prop1, .prop2] | @tsv')` to only call jq once. For integer arithmetic, replace `bc` with native bash `$((var + 10))`.
