@@ -1,0 +1,3 @@
+## 2024-07-13 - [Batching jq calls to reduce process fork overhead]
+**Learning:** When parsing JSON files in bash test suites using `jq`, making repeated individual calls to `jq` for different fields is a significant performance bottleneck due to process fork overhead. In `tests/run_all.sh`, there are multiple instances where `jq` is called sequentially on the same file or string.
+**Action:** Batch `jq` queries into a single call using arrays and `@tsv`, and read them into variables simultaneously using `IFS=$'\t' read -r`. Make sure to handle potential `null` inputs using the `?` operator. Avoid `// empty` in array constructors. Also ensure to use safe null checks before using functions like `test()`.
