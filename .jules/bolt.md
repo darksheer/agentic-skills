@@ -1,0 +1,3 @@
+## 2023-10-26 - Batching jq queries in bash arrays
+**Learning:** In bash, executing `jq` repeatedly on the same JSON object inside a script is very inefficient. Also, parsing `.sessions` array requires checking for `null` with `?` to avoid iteration errors on failed API responses (e.g. mock runs), and fields like `.title` must be checked before applying `test()` regexes to avoid fatal errors.
+**Action:** Always batch multiple `jq` queries into a single array and output as `@tsv`. Use `IFS=$'\t' read -r var1 var2 ...` to read them in parallel. Use `?` when iterating arrays (`.[]?`) in case the root object is missing or null, and ensure fields are non-null before string operations.
