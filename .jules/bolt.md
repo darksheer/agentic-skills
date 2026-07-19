@@ -1,0 +1,3 @@
+## 2024-05-15 - [Performance Optimization for jq in Bash Test Suite]
+**Learning:** Calling `jq` inside a loop in a bash script multiple times for extracting different fields from the same JSON payload incurs massive subshell overhead. Additionally, using `bc` for simple arithmetic significantly slows down test execution compared to using native bash arithmetic expansion `$(( ... ))` and `awk` for floating points.
+**Action:** Always batch `jq` extractions into an array structure and use `@tsv` along with `IFS=$'\t' read -r` to parse fields positionally. Ensure string/null conditions are safely handled when reading TSV to avoid shifting variables. Replace `bc` calls with `$(())` and `awk` for better performance.
