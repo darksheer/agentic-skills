@@ -1,0 +1,3 @@
+## 2024-11-20 - Batching jq queries in bash
+**Learning:** Running `jq` in bash tests over the same JSON payload repeatedly (e.g. 10 times) causes major overhead. Additionally, using `test()` on null fields throws fatal errors, and when mock testing (401 error payloads) without `.sessions`, `jq` fails without `?` safe operators.
+**Action:** Always batch queries into a single array and read as tab-separated (`@tsv`) values (`IFS=$'\t' read -r ...`). Protect arrays with `?` (e.g., `.sessions[]?`) and use explicit `!= null` checks before regex operations.
