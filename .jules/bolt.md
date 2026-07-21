@@ -1,0 +1,4 @@
+## 2025-02-28 - Optimizing Bash/jq script performance and dependencies
+
+**Learning:** Repeated subshell calls to `jq` on large variables and usage of external dependencies like `bc` in loop constructs significantly bottleneck Bash scripts and are susceptible to failure if external dependencies are not installed in the CI. When parsing mocked json error output from Jules API, missing `.sessions` causes `test()` to throw fatal errors when fields are implicitly typed.
+**Action:** Consolidate scalar metrics from `.json` objects into single batched `jq` arrays passed back with `@tsv` via `IFS=$'\t' read -r ... < <(echo "$sessions" | jq -r '[...] | @tsv')`, making sure to handle empty arrays correctly using `?` for `null` robustness and check variables for `null` before evaluating `.title | test`. Furthermore, replace `bc` mathematical evaluations with Bash integer arithmetic `$((...))` and natively supported text parsers such as `awk`.
