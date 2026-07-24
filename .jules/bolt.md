@@ -1,0 +1,3 @@
+## 2024-05-24 - Batching jq Calls in Bash Test Suites
+**Learning:** Parsing large JSON payloads in bash by making sequential `jq` calls is a significant performance bottleneck in the test suite. Each `jq` execution spawns a new process and reparses the entire JSON payload, leading to an O(N) overhead where N is the number of properties extracted.
+**Action:** Batch `jq` queries into a single call using an array constructor and the `@tsv` filter, then extract them simultaneously into bash variables using `IFS=$'\t' read -r var1 var2 ...`. Use default fallbacks (e.g., `// "fallback"`) to ensure variables align correctly if fields might be missing.
