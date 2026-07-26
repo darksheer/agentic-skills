@@ -1,0 +1,3 @@
+## 2024-07-26 - [Avoid bc and subshells in loops/tests]
+**Learning:** The bash test suite executes many `jq` queries against the same JSON payloads and uses `bc` for simple integer additions. This causes significant overhead by spawning many external processes. Using a mock API key results in a `null` `.sessions` array, causing `jq` errors when iterating over it using `.sessions[]` without a default or optional operator.
+**Action:** Batch `jq` queries against the same payload using arrays and `@tsv`, reading them simultaneously with `IFS=$'\t' read -r`. Handle potentially null arrays gracefully (e.g. `[.sessions[]?]`). Use native bash integer arithmetic (`$((...))`) and `awk` for floating-point calculations instead of `bc` to eliminate subshell overhead.
