@@ -214,10 +214,10 @@ run_fixtures() {
 
   echo ""
   echo "  [Session Classification]"
-  completed=$(jq '[.sessions[] | select(.state == "COMPLETED")] | length' "$sessions_file")
-  awaiting=$(jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length' "$sessions_file")
-  active=$(jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length' "$sessions_file")
-  failed_sessions=$(jq '[.sessions[] | select(.state == "FAILED")] | length' "$sessions_file")
+  completed=$(jq '[.sessions[]? | select(.state == "COMPLETED")] | length' "$sessions_file")
+  awaiting=$(jq '[.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length' "$sessions_file")
+  active=$(jq '[.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length' "$sessions_file")
+  failed_sessions=$(jq '[.sessions[]? | select(.state == "FAILED")] | length' "$sessions_file")
 
   [ "$completed" = "2" ] && pass "Classified 2 completed sessions" || fail "Expected 2 completed sessions, got $completed"
   [ "$awaiting" = "2" ] && pass "Classified 2 awaiting-feedback sessions" || fail "Expected 2 awaiting-feedback sessions, got $awaiting"
@@ -226,9 +226,9 @@ run_fixtures() {
 
   echo ""
   echo "  [Output Detection]"
-  with_changeset=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length' "$sessions_file")
-  with_pr=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length' "$sessions_file")
-  no_output=$(jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length' "$sessions_file")
+  with_changeset=$(jq '[.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length' "$sessions_file")
+  with_pr=$(jq '[.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length' "$sessions_file")
+  no_output=$(jq '[.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length' "$sessions_file")
 
   [ "$with_changeset" = "2" ] && pass "Detected 2 sessions with changeSet output" || fail "Expected 2 sessions with changeSet output, got $with_changeset"
   [ "$with_pr" = "1" ] && pass "Detected 1 session with pullRequest output" || fail "Expected 1 session with pullRequest output, got $with_pr"
@@ -281,8 +281,8 @@ run_fixtures() {
 
   echo ""
   echo "  [Feedback Question Classification]"
-  simple_message=$(jq -r '[.activities[] | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty' "$simple_feedback_file")
-  substantive_message=$(jq -r '[.activities[] | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty' "$substantive_feedback_file")
+  simple_message=$(jq -r '[.activities[]? | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty' "$simple_feedback_file")
+  substantive_message=$(jq -r '[.activities[]? | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty' "$substantive_feedback_file")
 
   if printf "%s" "$simple_message" | grep -qiE "(satisfied|finalize|proceed|confirm.*good)"; then
     pass "Classified simple confirmation as auto-respondable"
@@ -460,7 +460,7 @@ run_api() {
   activity_sessions=$(curl -s \
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
-  session_id=$(echo "$activity_sessions" | jq -r '[.sessions[] | select(.state == "COMPLETED")][0].id // empty')
+  session_id=$(echo "$activity_sessions" | jq -r '[.sessions[]? | select(.state == "COMPLETED")][0].id // empty')
   if [ -n "$session_id" ]; then
     activities_response=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$session_id/activities?pageSize=5" \
@@ -509,35 +509,35 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  total=$(echo "$sessions" | jq '.sessions // [] | length')
+  completed=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "COMPLETED")] | length')
+  awaiting=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length')
+  active=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
   # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
+  bolt_count=$(echo "$sessions" | jq '[.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt")))] | length')
+  palette_count=$(echo "$sessions" | jq '[.sessions[]? | select(.title and (.title | test("^Palette")))] | length')
+  oneoff_count=$(echo "$sessions" | jq '[.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt|^Palette") | not))] | length')
 
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
   # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
+  with_changeset=$(echo "$sessions" | jq '[.sessions[]? | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
+  with_pr=$(echo "$sessions" | jq '[.sessions[]? | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
+  no_output=$(echo "$sessions" | jq '[.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length')
 
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
   echo "  [Triage Scoring - Dry Run]"
   # Pick a completed session with a changeSet and simulate scoring
-  candidate=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
+  candidate=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
 
   if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
     c_title=$(echo "$candidate" | jq -r '.title')
@@ -552,7 +552,7 @@ run_pipeline() {
     # Factor: has output (proxy for tests pass) → 0.30
     has_output=$(echo "$candidate" | jq 'if .outputs and (.outputs | length) > 0 then 1 else 0 end')
     if [ "$has_output" = "1" ]; then
-      score=$(echo "$score + 30" | bc)
+      score=$((score + 30))
       pass "  Tests/output: +0.30 (has changeSet)"
     fi
 
@@ -561,7 +561,7 @@ run_pipeline() {
     if [ -n "$patch" ]; then
       files_changed=$(echo "$patch" | grep -c "^diff --git" || true)
       if [ "$files_changed" -le 50 ]; then
-        score=$(echo "$score + 20" | bc)
+        score=$((score + 20))
         pass "  Scope: +0.20 ($files_changed files, within limit)"
       else
         fail "  Scope: +0.00 ($files_changed files, exceeds limit)"
@@ -570,31 +570,31 @@ run_pipeline() {
 
     # Factor: agent match → 0.15
     if echo "$c_title" | grep -qiE "^(Bolt|Palette)"; then
-      score=$(echo "$score + 15" | bc)
+      score=$((score + 15))
       pass "  Agent match: +0.15 (known agent)"
     else
-      score=$(echo "$score + 8" | bc)
+      score=$((score + 8))
       pass "  Agent match: +0.08 (one-off session)"
     fi
 
     # Factor: clear intent → 0.15 (has a title)
     if [ ${#c_title} -gt 10 ]; then
-      score=$(echo "$score + 15" | bc)
+      score=$((score + 15))
       pass "  Intent clarity: +0.15 (descriptive title)"
     fi
 
     # Factor: no errors → 0.10 (completed = no errors)
-    score=$(echo "$score + 10" | bc)
+    score=$((score + 10))
     pass "  No errors: +0.10 (state=COMPLETED)"
 
     # Factor: plan approval → 0.10
-    score=$(echo "$score + 7" | bc)
+    score=$((score + 7))
     pass "  Plan approval: +0.07 (auto-approved)"
 
-    final_score=$(echo "scale=2; $score / 100" | bc)
+    final_score=$(awk "BEGIN {printf \"%.2f\", $score / 100}")
     pass "  FINAL SCORE: $final_score (threshold: 0.70)"
 
-    if [ "$(echo "$score >= 70" | bc)" = "1" ]; then
+    if [ "$score" -ge 70 ]; then
       pass "  DECISION: Would promote to PR ✓"
     else
       echo "  ⚠ DECISION: Below threshold, would include in digest for review"
@@ -605,13 +605,13 @@ run_pipeline() {
 
   echo ""
   echo "  [Question Detection - AWAITING_USER_FEEDBACK]"
-  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
+  awaiting_session=$(echo "$sessions" | jq -r '[.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")][0].id // empty')
   if [ -n "$awaiting_session" ]; then
     activities=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$awaiting_session/activities?pageSize=50" \
       -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-    last_message=$(echo "$activities" | jq -r '[.activities[] | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty')
+    last_message=$(echo "$activities" | jq -r '[.activities[]? | select(.agentMessaged != null)] | last | .agentMessaged.agentMessage // empty')
 
     if [ -n "$last_message" ]; then
       # Classify: simple confirmation vs substantive question
