@@ -1,0 +1,3 @@
+## 2026-05-10 - Avoiding jq and bc subprocess spawning overhead in bash
+**Learning:** Found significant overhead in repeatedly launching `jq` and `bc` subshells inside loops and pipeline scripts within `tests/run_all.sh`. Launching external commands repeatedly in bash scripts can severely degrade test suite and overall script performance.
+**Action:** When working in bash test suites or parsing large json files, always prefer native bash mechanisms like `$(( ))` for integer math instead of calling `bc`. Group multiple `jq` queries into a single evaluation, producing a JSON array and outputting it via `@tsv`, then capturing all fields concurrently into bash variables using `IFS=$'\t' read -r`.
