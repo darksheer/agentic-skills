@@ -1,0 +1,3 @@
+## 2025-02-18 - Batch jq queries and eliminate bc in bash scripts
+**Learning:** In bash test suites, executing `jq` or `bc` repeatedly on identical payloads results in huge subshell overhead and performance loss. Using `bc` inside a loop or for every simple calculation is unnecessary, since Bash has native arithmetic `$(( ))`.
+**Action:** When extracting multiple scalar values from identical JSON output, consolidate them into a single `jq` array and emit them as a tab-separated list using `@tsv`. Read them using `IFS=$'\t' read -r var1 var2 ...`. Use native bash `$(( ))` arithmetic for integers and `awk` for floating point outputs instead of relying on `bc`.
