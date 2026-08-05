@@ -1,0 +1,3 @@
+## 2024-05-19 - Avoid subshells and external tools for simple bash math
+**Learning:** Using `bc` or frequent subshells like `$(echo ...)` in loops within bash scripts introduces significant performance overhead due to process creation. In `tests/run_all.sh`, these were used for basic integer math and floating-point formatting.
+**Action:** Replace `bc` and subshells with native bash integer arithmetic `$(( ... ))` for counting/scoring, and use integer logic for pseudo-floating point or formatted output (e.g. `frac=$((score % 100)); [ "$frac" -lt 10 ] && frac="0$frac"; final_score="$((score / 100)).$frac"`).
