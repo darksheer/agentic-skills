@@ -1,0 +1,3 @@
+## 2024-08-08 - Batching jq and avoiding bc in bash
+**Learning:** Calling `jq` repeatedly on the same JSON payload in bash is slow due to process overhead. The `@tsv` filter along with `IFS=$'\t' read -r` allows extracting multiple values in one fast pass. Also, external `bc` calls for simple math are slow compared to native bash math `$(( ))` and `awk` for floats.
+**Action:** Always batch multiple `jq` extractions into a single call returning TSV arrays, and use native bash integer math instead of subshell `bc` calls for performance.
