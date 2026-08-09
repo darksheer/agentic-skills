@@ -1,0 +1,3 @@
+## 2025-02-23 - Batching jq queries and replacing bc with native bash arithmetic
+**Learning:** Running `jq` inside loops or sequentially against the same JSON payload incurs repeated subprocess overhead. External `bc` commands also introduce process fork overhead which can significantly slow down bash test suites.
+**Action:** Replace sequential `jq` queries with single, batched `@tsv` calls to parse JSON payloads simultaneously into bash variables. Replace external `bc` process calls with native bash arithmetic (`$(( ))`) and `awk` for floating point division. Ensure to handle `null` properly in the batched arrays and default to `0` or appropriate placeholders when values are missing to prevent breaking positional assignment when parsing with `IFS=$'\t' read -r`.
