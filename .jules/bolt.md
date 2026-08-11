@@ -1,0 +1,3 @@
+## 2024-05-18 - Bash Optimization: Batching jq and avoiding external math binaries
+**Learning:** Repeatedly calling `jq` on large JSON structures and forking external processes like `bc` inside a bash loop introduces measurable performance overhead. The `// empty` keyword inside jq arrays drops elements, breaking positional `@tsv` parsing; use `.field // []` instead. Also, `bc` process overhead can be avoided by using bash native math for integers and `awk` for floating point.
+**Action:** Use a single batched `jq` query with `[@tsv]` to extract multiple fields simultaneously using `IFS=$'\t' read -r`. For basic arithmetic, use native bash math `$(( ))` or `awk` instead of `bc` to reduce process spawning overhead.
