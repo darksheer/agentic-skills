@@ -1,0 +1,3 @@
+## 2024-08-14 - Batch jq Queries in Bash Tests
+**Learning:** Calling `jq` repeatedly in bash tests creates significant process overhead. Using `@tsv` to batch queries can improve test execution performance by reducing the number of subshells and external process forks.
+**Action:** When extracting multiple fields from the same JSON string or file in bash, combine them into an array within a single `jq` invocation, output using `@tsv`, and read them simultaneously into variables using `IFS=$'\t' read -r`.
