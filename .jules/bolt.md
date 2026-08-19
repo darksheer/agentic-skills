@@ -1,0 +1,3 @@
+## 2025-02-18 - Bash scripting performance pattern
+**Learning:** Calling `jq` and `bc` repeatedly inside bash scripts introduces substantial process-spawning overhead. Batching queries into a single `jq` array and outputting via `@tsv` allows reading multiple variables via `IFS=$'\t' read -r` efficiently. Native bash math `$(( ))` completely avoids the need to shell out to `bc`. Using optional chained array queries in `jq` (e.g. `(.field? // [])`) is necessary to avoid null reference iteration errors.
+**Action:** When working in the bash test suite, combine sequential `jq` extractions into a single call and replace simple integer `bc` calculations with bash native math.
