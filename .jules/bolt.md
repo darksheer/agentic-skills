@@ -1,0 +1,3 @@
+## 2024-03-20 - Bash subprocess and jq batching overhead
+**Learning:** Using subprocesses like `bc` for simple integer math and repeatedly calling `jq` to parse the same JSON payload within tight shell scripts introduces significant overhead (thousands of ms) and CPU wait time, acting as a measurable performance bottleneck in test suites.
+**Action:** Replace `bc` calls with native bash arithmetic `$((...))`, and batch JSON extraction into a single `jq` call using `[ ... ] | @tsv` parsed with `IFS=$'\t' read -r` to avoid redundant process spawning. Avoid using zero-padding or floating point logic with subprocesses where possible, instead using native string interpolation like `[ "$score" -lt 100 ] && final_score="0.$score"`.
