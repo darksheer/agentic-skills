@@ -549,10 +549,12 @@ run_pipeline() {
     # Simulate scoring factors
     score=0
 
+    # ⚡ Bolt Optimization: Using native bash integer arithmetic $(( )) instead of
+    # spawning an external `bc` process. Spawning processes in a loop adds significant overhead (~300ms per 100 iterations).
     # Factor: has output (proxy for tests pass) → 0.30
     has_output=$(echo "$candidate" | jq 'if .outputs and (.outputs | length) > 0 then 1 else 0 end')
     if [ "$has_output" = "1" ]; then
-      score=$(echo "$score + 30" | bc)
+      score=$((score + 30))
       pass "  Tests/output: +0.30 (has changeSet)"
     fi
 
@@ -561,7 +563,7 @@ run_pipeline() {
     if [ -n "$patch" ]; then
       files_changed=$(echo "$patch" | grep -c "^diff --git" || true)
       if [ "$files_changed" -le 50 ]; then
-        score=$(echo "$score + 20" | bc)
+        score=$((score + 20))
         pass "  Scope: +0.20 ($files_changed files, within limit)"
       else
         fail "  Scope: +0.00 ($files_changed files, exceeds limit)"
@@ -570,31 +572,32 @@ run_pipeline() {
 
     # Factor: agent match → 0.15
     if echo "$c_title" | grep -qiE "^(Bolt|Palette)"; then
-      score=$(echo "$score + 15" | bc)
+      score=$((score + 15))
       pass "  Agent match: +0.15 (known agent)"
     else
-      score=$(echo "$score + 8" | bc)
+      score=$((score + 8))
       pass "  Agent match: +0.08 (one-off session)"
     fi
 
     # Factor: clear intent → 0.15 (has a title)
     if [ ${#c_title} -gt 10 ]; then
-      score=$(echo "$score + 15" | bc)
+      score=$((score + 15))
       pass "  Intent clarity: +0.15 (descriptive title)"
     fi
 
     # Factor: no errors → 0.10 (completed = no errors)
-    score=$(echo "$score + 10" | bc)
+    score=$((score + 10))
     pass "  No errors: +0.10 (state=COMPLETED)"
 
     # Factor: plan approval → 0.10
-    score=$(echo "$score + 7" | bc)
+    score=$((score + 7))
     pass "  Plan approval: +0.07 (auto-approved)"
 
-    final_score=$(echo "scale=2; $score / 100" | bc)
+    # ⚡ Bolt Optimization: Using awk for single float formatting instead of bc
+    final_score=$(awk -v s="$score" 'BEGIN { printf "%.2f", s / 100 }')
     pass "  FINAL SCORE: $final_score (threshold: 0.70)"
 
-    if [ "$(echo "$score >= 70" | bc)" = "1" ]; then
+    if [ "$score" -ge 70 ]; then
       pass "  DECISION: Would promote to PR ✓"
     else
       echo "  ⚠ DECISION: Below threshold, would include in digest for review"
