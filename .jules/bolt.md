@@ -1,0 +1,3 @@
+## 2024-08-27 - [Bash Test Suite Performance Optimization]
+**Learning:** In the `run_all.sh` bash test script, the dry-run pipeline test (Tier 4) makes numerous sequential subshell calls to `jq` and `bc` to parse session payloads and compute triage scores. The repeated overhead of spawning these external processes significantly slows down the test suite execution. This aligns with the codebase memory pattern to batch `jq` operations and avoid `bc`.
+**Action:** Replace sequential `jq` commands with a single batched `jq` call using `@tsv`, then parse the fields using `IFS=$'\t' read -r`. Avoid using `bc` by using native bash arithmetic (`$((...))`) and `awk` for floating point output formatting.
