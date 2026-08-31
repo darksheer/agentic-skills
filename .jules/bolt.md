@@ -1,0 +1,3 @@
+## 2024-09-01 - Avoid external command invocation for simple arithmetic in Bash
+**Learning:** Calling external commands like `bc` in Bash loops or sequential scoring logic causes a massive performance hit due to process spawning overhead (e.g., executing multiple `echo | bc` commands took ~1.3s vs ~0.4s for native evaluation). Additionally, standard test environments might not have `bc` installed, leading to silent failures or errors.
+**Action:** Always use native bash integer arithmetic (`$(( ))`) instead of `bc` for integers. If floating point division or formatting is required, use `awk` as it is more universally available and performant for single-shot evaluations.
