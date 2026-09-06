@@ -1,0 +1,3 @@
+## 2025-02-12 - Bash Script Overhead Reduction
+**Learning:** Sequential calls to `jq` and `bc` in bash scripts create significant process spawning overhead. Batching `jq` queries using `@tsv` into a single call and replacing `bc` with native bash integer arithmetic (`$(( ))`) or `awk` drastically improves script execution time.
+**Action:** Always batch JSON extractions into a single `jq` array with `@tsv` and read using `IFS=$'\t' read -r`. Avoid `bc` for simple arithmetic; use native bash math.
