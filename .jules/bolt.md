@@ -1,0 +1,3 @@
+## 2024-05-24 - Bash scripting performance optimization
+**Learning:** Calling `jq` repeatedly inside a bash script on the same JSON file adds significant overhead. Additionally, the `bc` command may not be available in all environments and introduces unnecessary process overhead for integer arithmetic.
+**Action:** Batch `jq` queries using an array and `@tsv` to extract multiple values in a single call, and read them concurrently via `IFS=$'\t' read -r`. Use bash's built-in integer arithmetic `$(( ))` or tools like `awk` for floating-point calculations to avoid depending on external tools like `bc`.
