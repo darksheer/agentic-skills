@@ -1,0 +1,3 @@
+## 2024-05-14 - Bash Performance Optimization with jq and Arithmetic
+**Learning:** Repeatedly invoking subshells for tools like `jq` or `bc` in bash tests introduces substantial overhead. Furthermore, `bc` might be missing on some test runners, causing silent failures. Using `jq` with `@tsv` efficiently batches queries (reducing subshells), while replacing `bc` with native bash arithmetic for integers and `awk` for floats ensures better compatibility and execution speed.
+**Action:** Batch multiple `jq` evaluations into arrays extracted via `@tsv`, read them using `IFS=$'\t' read -r`, and avoid calling `bc` by using `$(( ))` for integer math and `awk` for formatting or floats.
