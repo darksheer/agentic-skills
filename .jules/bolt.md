@@ -1,0 +1,3 @@
+## 2024-11-20 - Avoid external bc commands in bash scripts
+**Learning:** Using `bc` for simple arithmetic inside loops or frequent calls introduces significant process spawning overhead and can cause silent failures or 'command not found' errors in some environments where it is missing.
+**Action:** Rely on native bash integer arithmetic `$(( ))` for simple math and use universally available tools like `awk` for floating point operations to ensure scripts run efficiently and correctly.
