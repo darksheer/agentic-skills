@@ -1,0 +1,3 @@
+## 2025-02-12 - Optimize jq parsing and reduce bc subprocesses
+**Learning:** Sequential jq calls within bash scripts scale poorly due to subprocess overhead; batching via jq arrays and outputting TSV natively parsed by read eliminates this bottleneck. External commands like bc can be missing or add spawn latency, whereas native bash integer math (or lightweight awk for floats) handles arithmetic instantly.
+**Action:** Always batch JSON extraction logic into single jq calls generating TSV when unpacking multiple variables in bash, and prefer native bash integer math $(( )) over delegating arithmetic to external subprocesses.
