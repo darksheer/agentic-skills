@@ -1,0 +1,3 @@
+## 2024-05-30 - [jq batching and null safety]
+**Learning:** In bash test suites, making multiple separate `jq` calls on the same JSON payload adds process overhead. Batching them into a single `jq` array with `@tsv` is much faster. However, when parsing APIs that might return an error structure (without the expected array, e.g., missing `.sessions`), the standard `jq` array length `.sessions | length` throws a "Cannot iterate over null" fatal error.
+**Action:** Combine multiple `jq` extractions into a single call: `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '[ (.field // [] | length), ([.field[]? | select(...)] | length) ] | @tsv' file.json)"`. Always quote the command substitution and use `?` or `// []` to gracefully handle missing arrays in batched queries.
