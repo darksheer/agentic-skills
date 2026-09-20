@@ -1,0 +1,3 @@
+## 2025-03-05 - Batch jq and avoid bc in test scripts
+**Learning:** Sequential `jq` calls within the test scripts on large JSON outputs add significant unnecessary performance overhead and subprocess spawning overhead. Also, using external tools like `bc` for simple integer arithmetic in the test suite execution environments can lead to silent errors/failures if it isn't installed.
+**Action:** Use arrays and `@tsv` in `jq` to batch multiple field extractions into a single query. Use native bash arithmetic `$(( ))` for simple integer math and `awk` for floating points to avoid external dependencies like `bc`. Use `IFS=$'\t' read -r` to assign fields properly from the output.
