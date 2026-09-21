@@ -1,0 +1,3 @@
+## 2024-09-22 - [Optimizing jq process overhead in bash]
+**Learning:** Repeatedly calling `jq` in bash loops or for extracting multiple fields from the same JSON payload introduces significant process spawning overhead, slowing down scripts. Using `test()` on missing fields in mock payloads can also cause silent or unexpected failures when `.title` is null.
+**Action:** Batch `jq` queries into a single array and output them as tab-separated values using `@tsv`. Read them into bash variables simultaneously with `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '... | @tsv')"`. Always verify fields exist before using `test()` (e.g., `select(.title != null) | select(.title | test("..."))`) when working with mock endpoints.
