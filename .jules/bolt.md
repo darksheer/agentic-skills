@@ -1,0 +1,3 @@
+## 2024-09-24 - Bash scripting performance optimization
+**Learning:** Using subshells and the external command `bc` for simple arithmetic significantly slows down execution due to process spawn overhead. Bash's native `$(( ))` arithmetic expansion is much faster and avoids external dependency failures (e.g. `bc: command not found`). Furthermore, floating point arithmetic can be done cleanly with `awk` without relying on `bc`.
+**Action:** Replace `score=$(echo "$score + X" | bc)` with `score=$((score + X))` and `final_score=$(echo "scale=2; $score / 100" | bc)` with `final_score=$(awk "BEGIN { printf \"%.2f\", $score / 100 }")` across the test script. Use `[ "$score" -ge 70 ]` instead of invoking `bc` to evaluate the condition.
