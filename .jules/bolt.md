@@ -1,0 +1,3 @@
+## 2024-05-24 - Avoid external binary bc for math operations
+**Learning:** Using `bc` in a bash script introduces process spawning overhead for simple arithmetic, which can slow down loops and execution. Also, it might not be installed in all test environments.
+**Action:** Use native bash integer arithmetic `$(( ))` for integers and `awk` for floating point operations to reduce overhead and improve compatibility.
