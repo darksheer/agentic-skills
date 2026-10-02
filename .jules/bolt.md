@@ -1,0 +1,4 @@
+## 2024-05-24 - [Optimize shell test script parsing]
+**Learning:** Found multiple slow subshell invocations using `$(jq ...)` to parse JSON outputs in Bash loops over the same file or input. Using `jq` sequentially to parse multiple fields from the same file leads to high overhead, especially noticeable when running tests repeatedly. And also external process invocations like `bc` are slow compared to native bash arithmetic. Empty fields parsing natively requires attention to whitespace delimiters. Use arrays and `?` operators to avoid empty string errors from `null`.
+
+**Action:** Combined multiple `jq` calls into a single call returning an array mapped via `@tsv`, and used `IFS=$'\t' read -r ...` to assign to bash variables simultaneously. Used native Bash `$(( ))` for integer arithmetic where possible instead of shelling out to `bc`.
