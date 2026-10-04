@@ -1,0 +1,3 @@
+## 2024-05-23 - Bash Scripting Performance Pattern
+**Learning:** In bash test suites, repeatedly calling `jq` on the same JSON output or file introduces significant process spawning overhead. Batching queries into a single `jq` call using arrays and `@tsv`, and reading them simultaneously using `IFS=$'\t' read -r` prevents incorrect string splitting while heavily reducing overhead. Avoid external commands like `bc` for simple arithmetic; use native bash integer math `$(( ))` or tools like `awk` for floating points.
+**Action:** Always refactor multiple `jq` calls on the same payload into batched TSV extractions, and replace `bc` with `$(( ))` or `awk` in performance-sensitive scripts.
