@@ -1,0 +1,3 @@
+## 2024-05-14 - Removed external bc calls in bash test suite
+**Learning:** External commands like `bc` have process spawning overhead and may not be installed in all test execution environments, potentially causing silent failures or `command not found` errors.
+**Action:** Rely on native bash integer arithmetic `$(( ))` for integer math and universally available tools like `awk` for floating point formatting to reduce overhead and improve script reliability.
