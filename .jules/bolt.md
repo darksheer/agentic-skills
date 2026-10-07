@@ -1,0 +1,3 @@
+## 2024-10-07 - Optimize test suite with batched jq calls
+**Learning:** Calling `jq` repeatedly on the same JSON output in a bash script adds significant process overhead.
+**Action:** Use batched `jq` calls with `@tsv` and bash's `read -r` to parse multiple fields simultaneously to avoid spawning multiple jq sub-processes. Always make sure to use `?` in `jq` selections in case the keys don't exist and `(.sessions // [] | length)` when finding length of an array that could be missing. Remember to check if strings exist before applying string functions like `test()`. And always quote string parameter being passed to here string `<<< "$(jq ...)"`.
