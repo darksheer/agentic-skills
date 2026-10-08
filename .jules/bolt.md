@@ -1,0 +1,3 @@
+## 2024-10-08 - jq Array Evaluation and Default Mapping
+**Learning:** When using `jq -r '... | @tsv'` alongside a bash here-string to read into variables (e.g., `IFS=$'\t' read -r var1 var2 <<< "$(jq ...)"`), the array evaluation will produce zero elements for null/missing inputs leading to dropped fields. Using `(.sessions // [] | length)` is required to enforce an integer fallback during array mapping evaluation.
+**Action:** When batching `jq` arrays, default to an empty list `// []` when checking lengths of optional parent properties, and ensure the command substitution is double-quoted to prevent space collapse prior to reading the `@tsv` string.
