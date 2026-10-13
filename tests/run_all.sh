@@ -509,29 +509,31 @@ run_pipeline() {
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  total=$(echo "$sessions" | jq '.sessions | length')
-  completed=$(echo "$sessions" | jq '[.sessions[] | select(.state == "COMPLETED")] | length')
-  awaiting=$(echo "$sessions" | jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length')
-  active=$(echo "$sessions" | jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length')
+  IFS=$'\t' read -r total completed awaiting active bolt_count palette_count oneoff_count with_changeset with_pr no_output <<< "$(echo "$sessions" | jq -r '
+    [
+      (.sessions // [] | length),
+      ([.sessions[]? | select(.state == "COMPLETED")] | length),
+      ([.sessions[]? | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+      ([.sessions[]? | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+      ([.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt")))] | length),
+      ([.sessions[]? | select(.title and (.title | test("^Palette")))] | length),
+      ([.sessions[]? | select(.title and (.title | test("^Bolt|^⚡ Bolt|^Palette") | not))] | length),
+      ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+      ([.sessions[]? | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+      ([.sessions[]? | select(.outputs == null or (.outputs | length) == 0)] | length)
+    ] | map(. // 0) | @tsv
+  ')"
 
   pass "Fetched $total sessions: $completed completed, $awaiting awaiting feedback, $active active"
 
   echo ""
   echo "  [Agent Detection]"
   # Test agent title pattern matching
-  bolt_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Bolt|^⚡ Bolt"))] | length')
-  palette_count=$(echo "$sessions" | jq '[.sessions[] | select(.title | test("^Palette"))] | length')
-  oneoff_count=$(echo "$sessions" | jq "[.sessions[] | select(.title | test(\"^Bolt|^⚡ Bolt|^Palette\") | not)] | length")
-
   pass "Detected agents: Bolt=$bolt_count, Palette=$palette_count, one-off=$oneoff_count"
 
   echo ""
   echo "  [Output Analysis]"
   # Check how many sessions have changeSets vs pullRequests
-  with_changeset=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("changeSet"))] | length')
-  with_pr=$(echo "$sessions" | jq '[.sessions[] | select(.outputs != null) | select(.outputs[] | has("pullRequest"))] | length')
-  no_output=$(echo "$sessions" | jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length')
-
   pass "Outputs: $with_changeset with changeSet, $with_pr with pullRequest, $no_output with no output"
 
   echo ""
