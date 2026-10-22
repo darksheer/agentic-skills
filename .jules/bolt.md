@@ -1,0 +1,3 @@
+\## 2024-05-15 - Process Spawning Overhead with bc
+**Learning:** External commands like `bc` may not be installed in the project's default test execution environment (causing silent failures or 'command not found' errors). Additionally, repeatedly calling external binaries like `bc` for simple arithmetic spawns a new process each time, adding significant overhead in bash scripts.
+**Action:** Rely on native bash integer arithmetic `$(( ))` and universally available tools like `awk` (e.g., `awk "BEGIN {printf \"%.2f\", $score / 100}"`) to ensure scripts run correctly while reducing process spawning overhead.
