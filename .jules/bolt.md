@@ -1,0 +1,3 @@
+## 2024-05-30 - Replace bc with native bash math in test suite
+**Learning:** The bash test suite (`tests/run_all.sh`) was repeatedly spawning the external `bc` tool for simple integer arithmetic (`score=$(echo "$score + X" | bc)`), which introduces significant subshell and process overhead in loops. Furthermore, `bc` may not be installed in all test execution environments, causing silent failures.
+**Action:** Replace `bc` with native bash integer math (`$(( ))`) for additions, and use `awk` for floating point division (e.g., `awk "BEGIN {printf \"%.2f\", $score / 100}"`). Also, update conditional checks to use bash integer comparisons (`-ge`) instead of string equality checks on `bc` output.
