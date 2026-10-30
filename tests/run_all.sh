@@ -308,8 +308,10 @@ run_fixtures() {
     fail "Completed activities are missing required base fields"
   fi
 
+  # Optimization: Extract all event keys once and use native bash matching to avoid process spawning in loop
+  event_keys=$(jq -r '[.activities[] | keys[]] | unique | join(" ")' "$completed_activities_file")
   for event in planGenerated planApproved progressUpdated artifacts sessionCompleted; do
-    if jq -e --arg event "$event" '[.activities[] | select(has($event))] | length > 0' "$completed_activities_file" > /dev/null; then
+    if [[ " $event_keys " == *" $event "* ]]; then
       pass "Recognized activity event: $event"
     else
       fail "Missing activity event fixture: $event"
