@@ -214,10 +214,17 @@ run_fixtures() {
 
   echo ""
   echo "  [Session Classification]"
-  completed=$(jq '[.sessions[] | select(.state == "COMPLETED")] | length' "$sessions_file")
-  awaiting=$(jq '[.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length' "$sessions_file")
-  active=$(jq '[.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length' "$sessions_file")
-  failed_sessions=$(jq '[.sessions[] | select(.state == "FAILED")] | length' "$sessions_file")
+  IFS=$'\t' read -r completed awaiting active failed_sessions with_changeset with_pr no_output <<< "$(jq -r '
+    [
+      ([.sessions[] | select(.state == "COMPLETED")] | length),
+      ([.sessions[] | select(.state == "AWAITING_USER_FEEDBACK")] | length),
+      ([.sessions[] | select(.state == "ACTIVE" or .state == "IN_PROGRESS")] | length),
+      ([.sessions[] | select(.state == "FAILED")] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length),
+      ([.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length),
+      ([.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length)
+    ] | @tsv
+  ' "$sessions_file")"
 
   [ "$completed" = "2" ] && pass "Classified 2 completed sessions" || fail "Expected 2 completed sessions, got $completed"
   [ "$awaiting" = "2" ] && pass "Classified 2 awaiting-feedback sessions" || fail "Expected 2 awaiting-feedback sessions, got $awaiting"
@@ -226,9 +233,6 @@ run_fixtures() {
 
   echo ""
   echo "  [Output Detection]"
-  with_changeset=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("changeSet"))] | length' "$sessions_file")
-  with_pr=$(jq '[.sessions[] | select(.outputs != null) | select(.outputs[]? | has("pullRequest"))] | length' "$sessions_file")
-  no_output=$(jq '[.sessions[] | select(.outputs == null or (.outputs | length) == 0)] | length' "$sessions_file")
 
   [ "$with_changeset" = "2" ] && pass "Detected 2 sessions with changeSet output" || fail "Expected 2 sessions with changeSet output, got $with_changeset"
   [ "$with_pr" = "1" ] && pass "Detected 1 session with pullRequest output" || fail "Expected 1 session with pullRequest output, got $with_pr"
