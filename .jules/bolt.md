@@ -5,3 +5,7 @@
 ## 2024-10-29 - Batch jq calls for JSON parsing in bash
 **Learning:** In the bash test suite (`tests/run_all.sh`), multiple independent `jq` calls were used sequentially on the same file (`sessions-page.json`) to extract counts for `completed`, `awaiting`, `active`, `failed_sessions`, `with_changeset`, `with_pr`, and `no_output`. Spawning a new `jq` process for each extraction creates noticeable overhead.
 **Action:** When extracting multiple values from the same JSON source in bash, batch the queries into a single `jq` array and output them as a TSV. Read them into variables simultaneously using `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '[...] | @tsv' file.json)"`.
+
+## 2024-11-20 - Extract unique jq keys once to avoid loop spawning
+**Learning:** Checking for JSON keys inside a bash `for` loop by invoking `jq` repeatedly (e.g., `jq -e ... select(has($event))`) creates significant overhead due to process spawning.
+**Action:** Extract all unique keys outside the loop using a single `jq` call, joining them into a space-separated string (e.g., `jq -r '[.activities[] | keys[]] | unique | join(" ")'`). Then use native bash wildcard matching (e.g., `[[ " $keys " == *" $event "* ]]`) inside the loop to verify presence, vastly improving test execution speed while keeping the bash syntax clean.
