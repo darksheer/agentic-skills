@@ -5,3 +5,7 @@
 ## 2024-10-29 - Batch jq calls for JSON parsing in bash
 **Learning:** In the bash test suite (`tests/run_all.sh`), multiple independent `jq` calls were used sequentially on the same file (`sessions-page.json`) to extract counts for `completed`, `awaiting`, `active`, `failed_sessions`, `with_changeset`, `with_pr`, and `no_output`. Spawning a new `jq` process for each extraction creates noticeable overhead.
 **Action:** When extracting multiple values from the same JSON source in bash, batch the queries into a single `jq` array and output them as a TSV. Read them into variables simultaneously using `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '[...] | @tsv' file.json)"`.
+
+## 2024-11-20 - Batch jq calls and native bash string matching in loops
+**Learning:** Shell scripts containing inner loops that execute `jq` or `grep` on variables/files (e.g. iterating over 10 fields and calling `echo "$session" | jq -e ".$field"` inside the loop) introduce severe process-spawning overhead.
+**Action:** Extract all valid properties or file contents outside the loop into a single string (using a batched `jq` query like `keys=$(jq -r '[to_entries[] | select(.value != null and .value != false) | .key] | unique | join(" ")')` or `content=$(cat file.md)`), and then use native bash string matching (`[[ " $keys " == *" $field "* ]]`) inside the loop to avoid forking.

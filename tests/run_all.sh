@@ -139,8 +139,9 @@ run_structural() {
   done < <(find "$skills_root" -mindepth 1 -maxdepth 1 -type d | sort)
 
   babysitter_skill="$skills_root/github-babysitter/SKILL.md"
+  babysitter_content=$(cat "$babysitter_skill")
   for required_section in "## Default Invocation" "## Output Policy" "Do not write markdown reports" "Do not default to repo-rounds" "## Execution Contract" "Minimum data collection per repo" "Minimum data collection:" "Definition of done:" "## Active PR State Loop" "blocked-needs-approval" "ready-to-merge"; do
-    if grep -q "$required_section" "$babysitter_skill"; then
+    if [[ "$babysitter_content" == *"$required_section"* ]]; then
       pass "github-babysitter: has operational section '$required_section'"
     else
       fail "github-babysitter: missing operational section '$required_section'"
@@ -308,8 +309,9 @@ run_fixtures() {
     fail "Completed activities are missing required base fields"
   fi
 
+  events=$(jq -r 'if .activities then [.activities[] | keys[]] | unique | join(" ") else "" end' "$completed_activities_file")
   for event in planGenerated planApproved progressUpdated artifacts sessionCompleted; do
-    if jq -e --arg event "$event" '[.activities[] | select(has($event))] | length > 0' "$completed_activities_file" > /dev/null; then
+    if [[ " $events " == *" $event "* ]]; then
       pass "Recognized activity event: $event"
     else
       fail "Missing activity event fixture: $event"
@@ -401,8 +403,9 @@ run_api() {
   # Check session object shape
   session=$(echo "$body" | jq '.sessions[0] // empty')
   if [ -n "$session" ]; then
+    keys=$(echo "$session" | jq -r '[to_entries[] | select(.value != null and .value != false) | .key] | unique | join(" ")')
     for field in name id title state createTime sourceContext url; do
-      if echo "$session" | jq -e ".$field" > /dev/null 2>&1; then
+      if [[ " $keys " == *" $field "* ]]; then
         pass "Session has '$field' field"
       else
         fail "Session missing '$field' field (documented in jules-api.md)"
