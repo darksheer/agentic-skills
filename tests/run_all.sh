@@ -392,32 +392,45 @@ run_api() {
   echo ""
   echo "  [Jules API - List Sessions]"
   # Verify response shape matches what skill documents
-  if echo "$body" | jq -e '.sessions' > /dev/null 2>&1; then
+  IFS=$'\t' read -r has_sessions has_name has_id has_title has_state has_createTime has_sourceContext has_url has_source state <<< "$(echo "$body" | jq -r '
+    [
+      (if .sessions then 1 else 0 end),
+      (if .sessions?[0]?.name then 1 else 0 end),
+      (if .sessions?[0]?.id then 1 else 0 end),
+      (if .sessions?[0]?.title then 1 else 0 end),
+      (if .sessions?[0]?.state then 1 else 0 end),
+      (if .sessions?[0]?.createTime then 1 else 0 end),
+      (if .sessions?[0]?.sourceContext then 1 else 0 end),
+      (if .sessions?[0]?.url then 1 else 0 end),
+      (if .sessions?[0]?.sourceContext?.source then 1 else 0 end),
+      (.sessions?[0]?.state // "")
+    ] | @tsv
+  ' 2>/dev/null || printf "0\t0\t0\t0\t0\t0\t0\t0\t0\t\n")"
+
+  if [ "$has_sessions" = "1" ]; then
     pass "Response has 'sessions' array"
   else
     fail "Response missing 'sessions' array"
   fi
 
   # Check session object shape
-  session=$(echo "$body" | jq '.sessions[0] // empty')
-  if [ -n "$session" ]; then
-    for field in name id title state createTime sourceContext url; do
-      if echo "$session" | jq -e ".$field" > /dev/null 2>&1; then
-        pass "Session has '$field' field"
-      else
-        fail "Session missing '$field' field (documented in jules-api.md)"
-      fi
-    done
+  if [ "$has_name" = "1" ] || [ "$has_id" = "1" ]; then
+    if [ "$has_name" = "1" ]; then pass "Session has 'name' field"; else fail "Session missing 'name' field (documented in jules-api.md)"; fi
+    if [ "$has_id" = "1" ]; then pass "Session has 'id' field"; else fail "Session missing 'id' field (documented in jules-api.md)"; fi
+    if [ "$has_title" = "1" ]; then pass "Session has 'title' field"; else fail "Session missing 'title' field (documented in jules-api.md)"; fi
+    if [ "$has_state" = "1" ]; then pass "Session has 'state' field"; else fail "Session missing 'state' field (documented in jules-api.md)"; fi
+    if [ "$has_createTime" = "1" ]; then pass "Session has 'createTime' field"; else fail "Session missing 'createTime' field (documented in jules-api.md)"; fi
+    if [ "$has_sourceContext" = "1" ]; then pass "Session has 'sourceContext' field"; else fail "Session missing 'sourceContext' field (documented in jules-api.md)"; fi
+    if [ "$has_url" = "1" ]; then pass "Session has 'url' field"; else fail "Session missing 'url' field (documented in jules-api.md)"; fi
 
     # Check sourceContext shape
-    if echo "$session" | jq -e '.sourceContext.source' > /dev/null 2>&1; then
+    if [ "$has_source" = "1" ]; then
       pass "sourceContext.source present (format: sources/github/{org}/{repo})"
     else
       fail "sourceContext.source missing"
     fi
 
     # Check state is a known value
-    state=$(echo "$session" | jq -r '.state')
     case "$state" in
       ACTIVE|COMPLETED|FAILED|AWAITING_PLAN_APPROVAL|AWAITING_USER_FEEDBACK|QUEUED|IN_PROGRESS)
         pass "Session state '$state' is a known value"
@@ -436,19 +449,26 @@ run_api() {
     'https://jules.googleapis.com/v1alpha/sources' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-  if echo "$sources_response" | jq -e '.sources' > /dev/null 2>&1; then
+  IFS=$'\t' read -r has_sources source_count has_name has_owner <<< "$(echo "$sources_response" | jq -r '
+    [
+      (if .sources then 1 else 0 end),
+      (.sources // [] | length),
+      (if .sources[0]?.name then 1 else 0 end),
+      (if .sources[0]?.githubRepo?.owner then 1 else 0 end)
+    ] | @tsv
+  ' 2>/dev/null || printf "0\t0\t0\t0\n")"
+
+  if [ "$has_sources" = "1" ]; then
     pass "Sources endpoint returns 'sources' array"
-    source_count=$(echo "$sources_response" | jq '.sources | length')
     pass "Found $source_count connected sources"
 
     # Verify source shape
-    first_source=$(echo "$sources_response" | jq '.sources[0]')
-    if echo "$first_source" | jq -e '.name' > /dev/null 2>&1; then
+    if [ "$has_name" = "1" ]; then
       pass "Source has 'name' field"
     else
       fail "Source missing 'name' field"
     fi
-    if echo "$first_source" | jq -e '.githubRepo.owner' > /dev/null 2>&1; then
+    if [ "$has_owner" = "1" ]; then
       pass "Source has 'githubRepo.owner' field"
     else
       fail "Source missing 'githubRepo.owner' field"
@@ -464,23 +484,32 @@ run_api() {
   activity_sessions=$(curl -s \
     'https://jules.googleapis.com/v1alpha/sessions?pageSize=30' \
     -H "X-Goog-Api-Key: $JULES_API_KEY")
-  session_id=$(echo "$activity_sessions" | jq -r '[.sessions[] | select(.state == "COMPLETED")][0].id // empty')
+  session_id=$(echo "$activity_sessions" | jq -r '.sessions? // [] | map(select(.state == "COMPLETED"))[0]?.id // empty' 2>/dev/null || echo "")
   if [ -n "$session_id" ]; then
     activities_response=$(curl -s \
       "https://jules.googleapis.com/v1alpha/sessions/$session_id/activities?pageSize=5" \
       -H "X-Goog-Api-Key: $JULES_API_KEY")
 
-    if echo "$activities_response" | jq -e '.activities' > /dev/null 2>&1; then
+    IFS=$'\t' read -r has_activities has_activity has_name has_createTime has_originator <<< "$(echo "$activities_response" | jq -r '
+      [
+        (if .activities then 1 else 0 end),
+        (if .activities?[0] then 1 else 0 end),
+        (if .activities?[0]?.name then 1 else 0 end),
+        (if .activities?[0]?.createTime then 1 else 0 end),
+        (if .activities?[0]?.originator then 1 else 0 end)
+      ] | @tsv
+    ' 2>/dev/null || printf "0\t0\t0\t0\t0\n")"
+
+    if [ "$has_activities" = "1" ]; then
       pass "Activities endpoint returns 'activities' array"
-      activity=$(echo "$activities_response" | jq '.activities[0] // empty')
-      if [ -n "$activity" ]; then
-        if echo "$activity" | jq -e '.name' > /dev/null 2>&1; then
+      if [ "$has_activity" = "1" ]; then
+        if [ "$has_name" = "1" ]; then
           pass "Activity has 'name' field"
         fi
-        if echo "$activity" | jq -e '.createTime' > /dev/null 2>&1; then
+        if [ "$has_createTime" = "1" ]; then
           pass "Activity has 'createTime' field"
         fi
-        if echo "$activity" | jq -e '.originator' > /dev/null 2>&1; then
+        if [ "$has_originator" = "1" ]; then
           pass "Activity has 'originator' field"
         else
           fail "Activity missing 'originator' field (documented in jules-api.md)"
@@ -544,12 +573,22 @@ run_pipeline() {
   echo ""
   echo "  [Triage Scoring - Dry Run]"
   # Pick a completed session with a changeSet and simulate scoring
-  candidate=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
+  IFS=$'\t' read -r c_title c_id c_source has_output patch <<< "$(echo "$sessions" | jq -r '
+    [.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty |
+    if . == null then
+      "\t\t\t0\t"
+    else
+      [
+        (.title // ""),
+        (.id // ""),
+        (.sourceContext.source // ""),
+        (if .outputs and (.outputs | length) > 0 then 1 else 0 end),
+        (.outputs[0]?.changeSet?.gitPatch?.unidiffPatch // "")
+      ] | @tsv
+    end
+  ')"
 
-  if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
-    c_title=$(echo "$candidate" | jq -r '.title')
-    c_id=$(echo "$candidate" | jq -r '.id')
-    c_source=$(echo "$candidate" | jq -r '.sourceContext.source')
+  if [ -n "$c_title" ] && [ "$c_title" != "null" ]; then
     echo "  Scoring session: $c_title"
     echo "  Source: $c_source"
 
@@ -557,16 +596,14 @@ run_pipeline() {
     score=0
 
     # Factor: has output (proxy for tests pass) → 0.30
-    has_output=$(echo "$candidate" | jq 'if .outputs and (.outputs | length) > 0 then 1 else 0 end')
     if [ "$has_output" = "1" ]; then
       score=$((score + 30))
       pass "  Tests/output: +0.30 (has changeSet)"
     fi
 
     # Factor: scope check
-    patch=$(echo "$candidate" | jq -r '.outputs[0].changeSet.gitPatch.unidiffPatch // ""')
     if [ -n "$patch" ]; then
-      files_changed=$(echo "$patch" | grep -c "^diff --git" || true)
+      files_changed=$(printf "%b\n" "$patch" | grep -c "^diff --git" || true)
       if [ "$files_changed" -le 50 ]; then
         score=$((score + 20))
         pass "  Scope: +0.20 ($files_changed files, within limit)"
