@@ -9,3 +9,7 @@
 ## 2024-11-23 - Batch jq queries checking JSON key presence in bash loops
 **Learning:** In the bash test suite (`tests/run_all.sh`), a `jq -e` query was being run repeatedly in a bash loop for different fields. Spawning a new `jq` process for each extraction creates noticeable overhead.
 **Action:** To optimize checking for JSON key presence in bash loops, avoid spawning repeated `jq` processes. Instead, use a single `jq` call to extract unique keys into a space-separated string (e.g., `jq -r '[... | keys[]] | unique | join(" ")'`) and use native bash wildcard matching (e.g., `[[ " $keys " == *" $val "* ]]`).
+
+## 2024-11-23 - Optimize grep -q inside bash loops
+**Learning:** Using `grep -q` inside a loop in a bash script (e.g., in `tests/run_all.sh`) spawns a new subshell and `grep` process for every iteration, which creates significant execution overhead. For simple substring matching, native bash string manipulation is vastly superior in performance.
+**Action:** When repeatedly searching for different strings within the same file inside a loop, read the file into memory once (`content=$(cat "$file")`) and use native bash pattern matching (`[[ "$content" == *"$string"* ]]`) to avoid process spawning overhead.
