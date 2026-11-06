@@ -402,8 +402,9 @@ run_api() {
   # Check session object shape
   session=$(echo "$body" | jq '.sessions[0] // empty')
   if [ -n "$session" ]; then
+    keys=$(echo "$session" | jq -r '[to_entries[] | select(.value != null and .value != false) | .key] | unique | join(" ")')
     for field in name id title state createTime sourceContext url; do
-      if echo "$session" | jq -e ".$field" > /dev/null 2>&1; then
+      if [[ " $keys " == *" $field "* ]]; then
         pass "Session has '$field' field"
       else
         fail "Session missing '$field' field (documented in jules-api.md)"
@@ -475,13 +476,14 @@ run_api() {
       pass "Activities endpoint returns 'activities' array"
       activity=$(echo "$activities_response" | jq '.activities[0] // empty')
       if [ -n "$activity" ]; then
-        if echo "$activity" | jq -e '.name' > /dev/null 2>&1; then
+        keys=$(echo "$activity" | jq -r '[to_entries[] | select(.value != null and .value != false) | .key] | unique | join(" ")')
+        if [[ " $keys " == *" name "* ]]; then
           pass "Activity has 'name' field"
         fi
-        if echo "$activity" | jq -e '.createTime' > /dev/null 2>&1; then
+        if [[ " $keys " == *" createTime "* ]]; then
           pass "Activity has 'createTime' field"
         fi
-        if echo "$activity" | jq -e '.originator' > /dev/null 2>&1; then
+        if [[ " $keys " == *" originator "* ]]; then
           pass "Activity has 'originator' field"
         else
           fail "Activity missing 'originator' field (documented in jules-api.md)"
