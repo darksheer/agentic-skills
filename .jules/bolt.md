@@ -9,3 +9,7 @@
 ## 2024-11-23 - Batch jq queries checking JSON key presence in bash loops
 **Learning:** In the bash test suite (`tests/run_all.sh`), a `jq -e` query was being run repeatedly in a bash loop for different fields. Spawning a new `jq` process for each extraction creates noticeable overhead.
 **Action:** To optimize checking for JSON key presence in bash loops, avoid spawning repeated `jq` processes. Instead, use a single `jq` call to extract unique keys into a space-separated string (e.g., `jq -r '[... | keys[]] | unique | join(" ")'`) and use native bash wildcard matching (e.g., `[[ " $keys " == *" $val "* ]]`).
+
+## 2024-11-23 - Batch jq queries for object properties in bash loops
+**Learning:** In the bash test suite (`tests/run_all.sh`), multiple independent `jq` calls were used sequentially on the same json string (`$candidate`) to extract `title`, `id`, `source`, `outputs`, and `patch`. Spawning a new `jq` process for each extraction creates noticeable overhead.
+**Action:** When extracting multiple values from the same JSON object in bash, batch the queries into a single `jq` array and output them as a TSV. Read them into variables simultaneously using `IFS=$'\t' read -r var1 var2 <<< "$(jq -r '[...] | @tsv' << "$json")"`.
