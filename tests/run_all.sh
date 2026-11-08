@@ -552,9 +552,8 @@ run_pipeline() {
   candidate=$(echo "$sessions" | jq '[.sessions[]? | select(.state == "COMPLETED" and .outputs != null and (.outputs | length) > 0)][0] // empty')
 
   if [ -n "$candidate" ] && [ "$candidate" != "null" ]; then
-    c_title=$(echo "$candidate" | jq -r '.title')
-    c_id=$(echo "$candidate" | jq -r '.id')
-    c_source=$(echo "$candidate" | jq -r '.sourceContext.source')
+    eval "$(echo "$candidate" | jq -r '"c_title=\(.title | @sh) c_id=\(.id | @sh) c_source=\(.sourceContext.source | @sh) has_output=\(if .outputs and (.outputs | length) > 0 then 1 else 0 end) patch=\(.outputs[0].changeSet.gitPatch.unidiffPatch // "" | @sh)"')"
+
     echo "  Scoring session: $c_title"
     echo "  Source: $c_source"
 
@@ -562,14 +561,12 @@ run_pipeline() {
     score=0
 
     # Factor: has output (proxy for tests pass) → 0.30
-    has_output=$(echo "$candidate" | jq 'if .outputs and (.outputs | length) > 0 then 1 else 0 end')
     if [ "$has_output" = "1" ]; then
       score=$((score + 30))
       pass "  Tests/output: +0.30 (has changeSet)"
     fi
 
     # Factor: scope check
-    patch=$(echo "$candidate" | jq -r '.outputs[0].changeSet.gitPatch.unidiffPatch // ""')
     if [ -n "$patch" ]; then
       files_changed=$(echo "$patch" | grep -c "^diff --git" || true)
       if [ "$files_changed" -le 50 ]; then

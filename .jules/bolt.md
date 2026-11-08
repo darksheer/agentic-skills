@@ -13,3 +13,11 @@
 ## 2024-11-23 - Replicate jq -e behavior when batching field checks in bash
 **Learning:** When checking if specific JSON fields exist in bash using `jq -e '.field'`, the `jq -e` command explicitly fails if the field resolves to `null` or `false`. If you optimize the bash script by batching key extraction into a string (e.g., using `jq -r '[keys[]] | join(" ")'`) to avoid process spawning overhead, simple key matching (e.g., `[[ " $keys " == *" $field "* ]]`) might incorrectly pass if the field exists but its value is `null` or `false`.
 **Action:** To maintain logical equivalence with `jq -e` when batching key extraction, filter out `null` and `false` values first: `jq -r '[to_entries[]? | select(.value != null and .value != false) | .key] | unique | join(" ")'`.
+
+## 2024-05-24 - Bash Script Optimization
+**Learning:** In bash test suites, invoking external tools like `jq` multiple times in loops, or using subshells for simple formatting introduces significant overhead. Also `@tsv` escapes certain characters which need to be unescaped. An `eval` with `@sh` output format is much safer.
+**Action:** When working within the bash test suite, avoid repeatedly calling jq on the same JSON output or file. Instead, batch queries into a single jq call. Use `eval "$(echo "$json" | jq -r '@sh "var1=\(.key1) var2=\(.key2)"')"` to safely load values without string corruption. Ensure to handle potential null arrays properly.
+
+## 2024-05-24 - JQ @sh formatter syntax
+**Learning:** Using `@sh` on the whole string `"var=\(.key)"` in jq results in quoting the entire assignment (e.g., `'var=value'`), which bash interprets as a command instead of variable assignment.
+**Action:** When using `eval` to assign bash variables from jq, apply the `@sh` formatter only to the values: `"var=\(.key | @sh)"`.
