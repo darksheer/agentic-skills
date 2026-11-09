@@ -402,8 +402,9 @@ run_api() {
   # Check session object shape
   session=$(echo "$body" | jq '.sessions[0] // empty')
   if [ -n "$session" ]; then
+    keys=$(echo "$session" | jq -r '[to_entries[]? | select(.value != null and .value != false) | .key] | unique | join(" ")')
     for field in name id title state createTime sourceContext url; do
-      if echo "$session" | jq -e ".$field" > /dev/null 2>&1; then
+      if [[ " $keys " == *" $field "* ]]; then
         pass "Session has '$field' field"
       else
         fail "Session missing '$field' field (documented in jules-api.md)"
@@ -444,7 +445,8 @@ run_api() {
 
     # Verify source shape
     first_source=$(echo "$sources_response" | jq '.sources[0]')
-    if echo "$first_source" | jq -e '.name' > /dev/null 2>&1; then
+    keys=$(echo "$first_source" | jq -r '[to_entries[]? | select(.value != null and .value != false) | .key] | unique | join(" ")')
+    if [[ " $keys " == *" name "* ]]; then
       pass "Source has 'name' field"
     else
       fail "Source missing 'name' field"
@@ -475,17 +477,16 @@ run_api() {
       pass "Activities endpoint returns 'activities' array"
       activity=$(echo "$activities_response" | jq '.activities[0] // empty')
       if [ -n "$activity" ]; then
-        if echo "$activity" | jq -e '.name' > /dev/null 2>&1; then
-          pass "Activity has 'name' field"
-        fi
-        if echo "$activity" | jq -e '.createTime' > /dev/null 2>&1; then
-          pass "Activity has 'createTime' field"
-        fi
-        if echo "$activity" | jq -e '.originator' > /dev/null 2>&1; then
-          pass "Activity has 'originator' field"
-        else
-          fail "Activity missing 'originator' field (documented in jules-api.md)"
-        fi
+        keys=$(echo "$activity" | jq -r '[to_entries[]? | select(.value != null and .value != false) | .key] | unique | join(" ")')
+        for field in name createTime originator; do
+          if [[ " $keys " == *" $field "* ]]; then
+            pass "Activity has '$field' field"
+          else
+            if [ "$field" = "originator" ]; then
+              fail "Activity missing 'originator' field (documented in jules-api.md)"
+            fi
+          fi
+        done
       fi
     else
       fail "Activities endpoint failed"
