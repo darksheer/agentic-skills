@@ -139,8 +139,10 @@ run_structural() {
   done < <(find "$skills_root" -mindepth 1 -maxdepth 1 -type d | sort)
 
   babysitter_skill="$skills_root/github-babysitter/SKILL.md"
+  # Optimization: Read file into memory once to avoid spawning repeated grep processes
+  babysitter_content=$(cat "$babysitter_skill")
   for required_section in "## Default Invocation" "## Output Policy" "Do not write markdown reports" "Do not default to repo-rounds" "## Execution Contract" "Minimum data collection per repo" "Minimum data collection:" "Definition of done:" "## Active PR State Loop" "blocked-needs-approval" "ready-to-merge"; do
-    if grep -q "$required_section" "$babysitter_skill"; then
+    if [[ "$babysitter_content" == *"$required_section"* ]]; then
       pass "github-babysitter: has operational section '$required_section'"
     else
       fail "github-babysitter: missing operational section '$required_section'"
